@@ -22,7 +22,7 @@ class YoutubeRestApi {
 
       if (response.statusCode == ResponseCodeYoutube.success.intValue) {
         final channels = response.data['items'];
-        final channelsData = [];
+        final channelsData = <YoutubeChannelData>[];
         for (final channel in channels) {
           try {
             channelsData.add(
