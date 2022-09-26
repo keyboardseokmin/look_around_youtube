@@ -23,23 +23,21 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 20),
                     child: OutlinedButton(onPressed: () {
                       bloc.isEmptyCurrentUser()? bloc.googleSignIn(): bloc.googleSignOut();
-                    }, child: _buildIDButton(bloc))),
+                    }, child: _buildIDButtonText(bloc))),
                 Padding(
                     padding: const EdgeInsets.only(right: 20),
                     child: OutlinedButton(onPressed: () {}, child: const Text('Settings'))),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: _buildVideoList(bloc),
-            ),
+            const SizedBox(height: 20),
+            _buildVideoList(bloc)
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIDButton(HomeBloc bloc) {
+  Widget _buildIDButtonText(HomeBloc bloc) {
     return StreamBuilder<GoogleSignInAccount?>(
       stream: bloc.currentUserStream,
       builder: (context, snapshot) {
@@ -68,13 +66,38 @@ class HomeScreen extends StatelessWidget {
           } else if (snapshot.hasData == false) {
             return const CircularProgressIndicator();
           } else {
-            return _videoList(snapshot.data!);
+            return Expanded(child: _YoutubeVideoList(videoList: snapshot.data!));
           }
         }
     );
   }
+}
 
-  Widget _videoList(List<YoutubeChannelData> list) {
-    return List
+class _YoutubeVideoList extends StatelessWidget {
+  final List<YoutubeChannelData> videoList;
+
+  const _YoutubeVideoList({Key? key, required this.videoList}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+        scrollDirection: Axis.vertical,
+        shrinkWrap: true,
+        itemCount: videoList.length,
+        padding: const EdgeInsets.all(10),
+        itemBuilder: (BuildContext context, int index) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Text(videoList[index].name),
+              ),
+            ],);
+        },
+        separatorBuilder: (BuildContext context, int index) => const Divider(
+          color: Colors.grey
+        ),
+    );
   }
 }

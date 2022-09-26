@@ -28,6 +28,7 @@ class YoutubeRestApi {
             channelsData.add(
                 YoutubeChannelData(
                     channel['id'],
+                    channel['snippet']['resourceId']['channelId'],
                     channel['snippet']['title'],
                     channel['contentDetails']['newItemCount']
                 )
