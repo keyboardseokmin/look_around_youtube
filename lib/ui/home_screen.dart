@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../bloc/bloc_provider.dart';
 import '../bloc/home_bloc.dart';
-import '../data/datasource/youtube_channel_data.dart';
+import '../data/datasource/remote/youtube_scraping.dart';
+import '../data/datasource/youtube_data.dart';
+import '../injection_container.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<HomeBloc>(context);
+    final youtubeScraping = getIt<YoutubeScraping>();
 
     return Scaffold(
       body: SafeArea(
@@ -30,10 +35,46 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            _buildVideoList(bloc)
+            // _buildYoutubePlayer(bloc),
+            // const SizedBox(height: 10),
+            // _buildVideoList(bloc)
+            Expanded(child:
+              InAppWebView(
+                initialUrlRequest: youtubeScraping.initUri,
+                initialOptions: youtubeScraping.options,
+                onWebViewCreated: (controller) {
+                  youtubeScraping.webViewController = controller;
+                },
+                androidOnPermissionRequest: (controller, origin, resources) async {
+                  return PermissionRequestResponse(
+                      resources: resources,
+                      action: PermissionRequestResponseAction.GRANT);
+                },
+                onLoadStop: (controller, url) {
+                  debugPrint(url.toString());
+                  youtubeScraping.parseUrlAction(controller, url);
+                },
+              )
+            )
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildYoutubePlayer(HomeBloc bloc) {
+    return StreamBuilder<bool>(
+        stream: bloc.showYoutubeVideoStream,
+      builder: (context, snapshot) {
+          if (snapshot.data == true) {
+            return YoutubePlayer(
+              controller: bloc.controller,
+              showVideoProgressIndicator: true,
+            );
+          } else {
+            return Container();
+          }
+      }
     );
   }
 

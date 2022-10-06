@@ -1,9 +1,6 @@
 import 'package:google_fonts/google_fonts.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:look_around_youtube/bloc/bloc_provider.dart';
-import 'package:look_around_youtube/data/datasource/remote/youtube_rest_api.dart';
 import 'package:look_around_youtube/ui/app_colors.dart';
 import 'package:look_around_youtube/ui/home_screen.dart';
 import 'bloc/home_bloc.dart';
@@ -12,6 +9,7 @@ import 'injection_container.dart' as ic;
 
 void main() async {
   ic.init();
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

@@ -2,19 +2,37 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:look_around_youtube/data/datasource/remote/youtube_scraping.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../data/datasource/remote/youtube_rest_api.dart';
-import '../data/datasource/youtube_channel_data.dart';
+import '../data/datasource/youtube_data.dart';
 import '../injection_container.dart';
 import 'bloc.dart';
 
 class HomeBloc implements Bloc {
   final _dio = getIt<Dio>();
   final _youtubeApi = getIt<YoutubeRestApi>();
+  final _youtubeScraping = getIt<YoutubeScraping>();
+
   final _googleSignIn = GoogleSignIn(
     scopes: <String>[
       'https://www.googleapis.com/auth/youtube',
     ]
   );
+  final youtubeUrlPrefix = "https://youtube.com/watch?v=";
+  final youtubeVideoList = <YoutubeVideoData>[];
+
+  // Youtube Player 관련
+  final YoutubePlayerController controller = YoutubePlayerController(
+    initialVideoId: '',
+    flags: const YoutubePlayerFlags(
+      autoPlay: false,
+      enableCaption: false,
+    ),
+  );
+
+  final _showYoutubeVideo = StreamController<bool>();
+  Stream<bool> get showYoutubeVideoStream => _showYoutubeVideo.stream;
 
   final _currentUserController = StreamController<GoogleSignInAccount?>();
   GoogleSignInAccount? _currentUser;
@@ -25,24 +43,48 @@ class HomeBloc implements Bloc {
   Stream<List<YoutubeChannelData>> get videoListStream => _videoList.stream;
 
   HomeBloc() {
-    _googleSignIn.onCurrentUserChanged.listen((account) async {
-      _currentUser = account;
-      currentUser.add(account);
+    // _googleSignIn.onCurrentUserChanged.listen((account) async {
+    //   _currentUser = account;
+    //   currentUser.add(account);
+    //
+    //   var authHeaders = await account?.authHeaders;
+    //   if (authHeaders != null) {
+    //     _setTokenToHeader(authHeaders);
+    //     // _videoList.sink.add(await _youtubeApi.getSubscriptions());
+    //
+    //     loadData();
+    //   }
+    // });
 
-      var authHeaders = await account?.authHeaders;
-      if (authHeaders != null) {
-        _setTokenToHeader(authHeaders);
+    // _googleSignIn.signInSilently();
+  }
 
-        _videoList.sink.add(await _youtubeApi.getSubscriptions());
-      }
-    });
-
-    _googleSignIn.signInSilently();
+  @override
+  void deactivate() {
+    controller.pause();
   }
 
   @override
   void dispose() {
+    controller.dispose();
     _currentUserController.close();
+  }
+
+  void loadData() async {
+    final videoSubscriptions = await _youtubeApi.getSubscriptions();
+    if (videoSubscriptions.isEmpty) return;
+    final channels = getNewVideoCountInChannel(videoSubscriptions);
+
+    final videos = <YoutubeVideoData>[];
+    for (final channel in channels) {
+      videos.addAll(await _youtubeApi.getNewVideos(channel.channelId, channel.newItemCount));
+    }
+
+    youtubeVideoList.clear();
+    youtubeVideoList.addAll(videos);
+    controller.load(youtubeVideoList.first.videoId);
+
+    _showYoutubeVideo.sink.add(true);
   }
 
   void _setTokenToHeader(Map<String, String> test) {
@@ -68,4 +110,16 @@ class HomeBloc implements Bloc {
   void googleSignOut() => _googleSignIn.signOut();
   bool isEmptyCurrentUser() => _currentUser == null;
   Future getSubscriptions() => _youtubeApi.getSubscriptions();
+
+  List<YoutubeChannelData> getNewVideoCountInChannel(List<YoutubeChannelData> subscribeChannels) {
+    final hasNewVideoChannels = <YoutubeChannelData>[];
+
+    for (var channel in subscribeChannels) {
+      if (channel.newItemCount > 0) {
+        hasNewVideoChannels.add(channel);
+      }
+    }
+
+    return hasNewVideoChannels;
+  }
 }

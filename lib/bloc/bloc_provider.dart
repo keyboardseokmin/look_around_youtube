@@ -29,4 +29,10 @@ class _BlocProviderState extends State<BlocProvider> {
     widget.bloc.dispose();
     super.dispose();
   }
+
+  @override
+  void deactivate() {
+    widget.bloc.deactivate();
+    super.deactivate();
+  }
 }
