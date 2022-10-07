@@ -21,22 +21,22 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: OutlinedButton(onPressed: () {
-                      bloc.isEmptyCurrentUser()? bloc.googleSignIn(): bloc.googleSignOut();
-                    }, child: _buildIDButtonText(bloc))),
-                Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    child: OutlinedButton(onPressed: () {}, child: const Text('Settings'))),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // _buildYoutubePlayer(bloc),
-            // const SizedBox(height: 10),
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     Padding(
+            //         padding: const EdgeInsets.only(left: 20),
+            //         child: OutlinedButton(onPressed: () {
+            //           bloc.isEmptyCurrentUser()? bloc.googleSignIn(): bloc.googleSignOut();
+            //         }, child: _buildIDButtonText(bloc))),
+            //     Padding(
+            //         padding: const EdgeInsets.only(right: 20),
+            //         child: OutlinedButton(onPressed: () {}, child: const Text('Settings'))),
+            //   ],
+            // ),
+            // const SizedBox(height: 20),
+            _buildYoutubePlayer(bloc),
+            const SizedBox(height: 10),
             // _buildVideoList(bloc)
             Expanded(child:
               InAppWebView(

@@ -16,17 +16,19 @@ class YoutubeScraping {
         allowsInlineMediaPlayback: true,
       ));
 
-  void parseUrlAction(InAppWebViewController controller, Uri? url) {
+  void parseUrlAction(InAppWebViewController controller, Uri? url) async {
     switch (url.toString()) {
       case 'https://m.youtube.com/feed/subscriptions':
-        goSignInMenu(controller);
+        if (await goSignInMenu(controller) == false) {
+          getListOfVideos(controller);
+        }
         break;
       default:
         break;
     }
   }
 
-  void goSignInMenu(InAppWebViewController controller) async {
+  goSignInMenu(InAppWebViewController controller) async {
     var result = await controller.callAsyncJavaScript(functionBody:
       // 되는 기기가 있고 안되는 기기가 있음
       // "window.document.querySelector('[aria-label=\"Account\"]').click();"
@@ -55,13 +57,26 @@ class YoutubeScraping {
           }
         }, 1000);
       });
-      await p;
-      return p;
+      
+      return await p;
       """
     );
 
-    debugPrint('\n\n\n\n\n');
-    debugPrint(result.runtimeType.toString());
-    debugPrint(result?.value.toString());
+    return result?.value;
+  }
+
+  getListOfVideos(InAppWebViewController controller) async {
+    var result = await controller.callAsyncJavaScript(functionBody:
+      """
+      var p = new Promise(function(resolve, reject) {
+        var links = window.document.getElementsByClassName('media-item-thumbnail-container');
+        for (i=0; i < links.length; i++) {
+          alert(links[i].href);
+        }
+      });
+      
+      return await p;
+      """
+    );
   }
 }
