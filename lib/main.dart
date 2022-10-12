@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:look_around_youtube/bloc/bloc_provider.dart';
@@ -10,7 +13,18 @@ import 'injection_container.dart' as ic;
 void main() async {
   ic.init();
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  await EasyLocalization.ensureInitialized();
+  runApp(
+    // 언어설정
+    EasyLocalization(
+        // 지원 언어 리스트
+        supportedLocales: const [Locale('en'), Locale('ko')],
+        path: 'assets/translations',
+        // 지원 언어 이외의 시작 언어
+        fallbackLocale: const Locale('en'),
+        child: const MyApp()
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,6 +37,9 @@ class MyApp extends StatelessWidget {
     );
 
     return MaterialApp(
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       debugShowCheckedModeBanner: false,
       title: 'Look around Youtube',
       theme: ThemeData(

@@ -1,16 +1,8 @@
-class YoutubeChannelData {
-  late String id;
-  late String channelId;
-  late String name;
-  late int newItemCount;
-
-  YoutubeChannelData(this.id, this.channelId, this.name, this.newItemCount);
-}
-
 class YoutubeVideoData {
-  late String videoId;
-  late String publishedAt;
   late String title;
+  late String channel;
+  late String publishedAt;
+  late String videoUrl;
 
-  YoutubeVideoData(this.videoId, this.publishedAt, this.title);
+  YoutubeVideoData(this.title, this.channel, this.publishedAt, this.videoUrl);
 }

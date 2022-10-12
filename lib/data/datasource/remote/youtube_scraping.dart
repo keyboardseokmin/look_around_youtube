@@ -1,33 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class YoutubeScraping {
-  InAppWebViewController? webViewController;
-  URLRequest initUri = URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/'));
-  InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
-      crossPlatform: InAppWebViewOptions(
-        useShouldOverrideUrlLoading: true,
-        mediaPlaybackRequiresUserGesture: false,
-      ),
-      android: AndroidInAppWebViewOptions(
-        useHybridComposition: true,
-      ),
-      ios: IOSInAppWebViewOptions(
-        allowsInlineMediaPlayback: true,
-      ));
-
-  void parseUrlAction(InAppWebViewController controller, Uri? url) async {
-    switch (url.toString()) {
-      case 'https://m.youtube.com/feed/subscriptions':
-        if (await goSignInMenu(controller) == false) {
-          getListOfVideos(controller);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
   goSignInMenu(InAppWebViewController controller) async {
     var result = await controller.callAsyncJavaScript(functionBody:
       // 되는 기기가 있고 안되는 기기가 있음
@@ -65,18 +38,40 @@ class YoutubeScraping {
     return result?.value;
   }
 
-  getListOfVideos(InAppWebViewController controller) async {
+  getListOfVideo(InAppWebViewController controller) async {
     var result = await controller.callAsyncJavaScript(functionBody:
-      """
-      var p = new Promise(function(resolve, reject) {
-        var links = window.document.getElementsByClassName('media-item-thumbnail-container');
-        for (i=0; i < links.length; i++) {
-          alert(links[i].href);
-        }
-      });
+    """
+      var elements = window.document.getElementsByClassName('item');
+      var metadata = [];
       
-      return await p;
-      """
+      for (i=0; i < elements.length; i++) {
+        var elementTitle = elements[i].getElementsByClassName('media-item-headline');
+        var title = "";
+        if (elementTitle.length > 0) {
+          title = elementTitle[0].textContent;
+        }
+        
+        var info = elements[i].getElementsByClassName('ytm-badge-and-byline-item-byline');
+        var channel = "";
+        var createAt = "";
+        if (info.length > 2) {
+          channel = info[0].textContent;
+          createAt = info[2].textContent;
+        }
+        
+        var elementLink = elements[i].getElementsByClassName('media-item-thumbnail-container');
+        var link = "";
+        if (elementLink.length > 0) {
+          link = elementLink[0].href;
+        }
+        
+        metadata.push([title, channel, createAt, link]);
+      }
+      
+      return metadata;
+    """
     );
+
+    return result?.value;
   }
 }

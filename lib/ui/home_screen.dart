@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../bloc/bloc_provider.dart';
 import '../bloc/home_bloc.dart';
-import '../data/datasource/remote/youtube_scraping.dart';
 import '../data/datasource/youtube_data.dart';
-import '../injection_container.dart';
+import 'app_colors.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -15,126 +13,150 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<HomeBloc>(context);
-    final youtubeScraping = getIt<YoutubeScraping>();
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //   children: [
-            //     Padding(
-            //         padding: const EdgeInsets.only(left: 20),
-            //         child: OutlinedButton(onPressed: () {
-            //           bloc.isEmptyCurrentUser()? bloc.googleSignIn(): bloc.googleSignOut();
-            //         }, child: _buildIDButtonText(bloc))),
-            //     Padding(
-            //         padding: const EdgeInsets.only(right: 20),
-            //         child: OutlinedButton(onPressed: () {}, child: const Text('Settings'))),
-            //   ],
-            // ),
-            // const SizedBox(height: 20),
+            _buildWebView(bloc),
             _buildYoutubePlayer(bloc),
-            const SizedBox(height: 10),
-            // _buildVideoList(bloc)
-            Expanded(child:
-              InAppWebView(
-                initialUrlRequest: youtubeScraping.initUri,
-                initialOptions: youtubeScraping.options,
-                onWebViewCreated: (controller) {
-                  youtubeScraping.webViewController = controller;
-                },
-                androidOnPermissionRequest: (controller, origin, resources) async {
-                  return PermissionRequestResponse(
-                      resources: resources,
-                      action: PermissionRequestResponseAction.GRANT);
-                },
-                onLoadStop: (controller, url) {
-                  debugPrint(url.toString());
-                  youtubeScraping.parseUrlAction(controller, url);
-                },
-              )
-            )
+            _buildVideoList(bloc),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildYoutubePlayer(HomeBloc bloc) {
+  Widget _buildWebView(HomeBloc bloc) {
     return StreamBuilder<bool>(
-        stream: bloc.showYoutubeVideoStream,
+      stream: bloc.showWebViewStream,
       builder: (context, snapshot) {
-          if (snapshot.data == true) {
-            return YoutubePlayer(
-              controller: bloc.controller,
-              showVideoProgressIndicator: true,
-            );
-          } else {
-            return Container();
-          }
-      }
-    );
-  }
-
-  Widget _buildIDButtonText(HomeBloc bloc) {
-    return StreamBuilder<GoogleSignInAccount?>(
-      stream: bloc.currentUserStream,
-      builder: (context, snapshot) {
-        final results = snapshot.data;
-        if (results == null) {
-          return const Text('SignIn Youtube');
-        } else {
-          return Text(results.email);
-        }
+        return Visibility(
+            visible: (snapshot.data == true),
+            child: Expanded(child:
+            InAppWebView(
+              initialUrlRequest: bloc.initUri,
+              initialOptions: bloc.options,
+              onWebViewCreated: (controller) {
+                bloc.webViewController = controller;
+              },
+              androidOnPermissionRequest: (controller, origin, resources) async {
+                return PermissionRequestResponse(
+                    resources: resources,
+                    action: PermissionRequestResponseAction.GRANT);
+              },
+              onLoadStop: (controller, url) {
+                debugPrint(url.toString());
+                bloc.parseUrlAction(controller, url);
+              },
+            )
+            )
+        );
       },
     );
   }
 
-  Widget _buildVideoList(HomeBloc bloc) {
-    return StreamBuilder<List<YoutubeChannelData>>(
-        stream: bloc.videoListStream,
+  Widget _buildYoutubePlayer(HomeBloc bloc) {
+    return StreamBuilder<bool>(
+        stream: bloc.showYoutubeVideoStream,
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              const snackBar = SnackBar(content: Text('에러: 구독 정보를 가져올 수 없습니다'));
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            });
-            return Container();
-          } else if (snapshot.data == null) {
-            return Container();
-          } else if (snapshot.hasData == false) {
-            return const CircularProgressIndicator();
-          } else {
-            return Expanded(child: _YoutubeVideoList(videoList: snapshot.data!));
-          }
+          return Visibility(
+            visible: (snapshot.data == true),
+            child: StreamBuilder<YoutubePlayerController>(
+              stream: bloc.youtubePlayerControllerStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return YoutubePlayer(
+                    controller: snapshot.data!,
+                    showVideoProgressIndicator: true,
+                    onReady: () {},
+                  );
+                } else {
+                  return Container();
+                }
+              },
+            ),
+          );
         }
+    );
+  }
+
+  Widget _buildVideoList(HomeBloc bloc) {
+    return StreamBuilder<List<YoutubeVideoData>>(
+      stream: bloc.videoListStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            const snackBar = SnackBar(content: Text('에러: 구독 정보를 가져올 수 없습니다'));
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          });
+          return Container();
+        } else if (snapshot.data == null) {
+          return Container();
+        } else if (snapshot.hasData == false) {
+          return const CircularProgressIndicator();
+        } else {
+          return Expanded(child: _YoutubeVideoList(videoList: snapshot.data!));
+        }
+      },
     );
   }
 }
 
 class _YoutubeVideoList extends StatelessWidget {
-  final List<YoutubeChannelData> videoList;
+  final List<YoutubeVideoData> videoList;
 
   const _YoutubeVideoList({Key? key, required this.videoList}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final bloc = BlocProvider.of<HomeBloc>(context);
+
     return ListView.separated(
         scrollDirection: Axis.vertical,
         shrinkWrap: true,
         itemCount: videoList.length,
         padding: const EdgeInsets.all(10),
         itemBuilder: (BuildContext context, int index) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: Text(videoList[index].name),
-              ),
-            ],);
+          return InkWell(
+            onTap: () {
+              bloc.setYoutubePlayerController(index);
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: Text(
+                    videoList[index].title,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        videoList[index].channel,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(color: AppColors.textGray, fontSize: 13),
+                      ),
+                      Text(
+                        videoList[index].publishedAt,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(color: AppColors.textGray, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                )
+              ]),
+          );
         },
         separatorBuilder: (BuildContext context, int index) => const Divider(
           color: Colors.grey
