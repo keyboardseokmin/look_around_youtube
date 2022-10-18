@@ -1,5 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../bloc/bloc_provider.dart';
@@ -20,7 +20,9 @@ class HomeScreen extends StatelessWidget {
           children: [
             _buildWebView(bloc),
             _buildYoutubePlayer(bloc),
+            _buildVideoEmptyMessage(bloc),
             _buildVideoList(bloc),
+            _buildPlayerButtons(bloc),
           ],
         ),
       ),
@@ -81,6 +83,19 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildVideoEmptyMessage(HomeBloc bloc) {
+    return StreamBuilder<bool>(
+      stream: bloc.showVideoEmptyMessageStream,
+      builder: (context, snapshot) {
+        if (snapshot.data == true) {
+          return Expanded(child: Center(child: Text("${"empty".tr()} \u{1F622}")));
+        } else {
+          return Container();
+        }
+      }
+    );
+  }
+
   Widget _buildVideoList(HomeBloc bloc) {
     return StreamBuilder<List<YoutubeVideoData>>(
       stream: bloc.videoListStream,
@@ -101,6 +116,55 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildPlayerButtons(HomeBloc bloc) {
+    return StreamBuilder<bool>(
+      stream: bloc.showControlButtonsStream,
+      builder: (context, snapshot) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SizedBox(width: 10),
+            IconButton(
+              onPressed: () {
+                bloc.previousVideo();
+              },
+              icon: const Icon(Icons.skip_previous_rounded),
+            ),
+            IconButton(
+              onPressed: () {
+                bloc.rewindVideo(bloc.videoJumpSecond);
+              },
+              icon: const Icon(Icons.fast_rewind_rounded),
+            ),
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.black87,
+              child: IconButton(
+                onPressed: () {},
+                // pause_rounded 
+                icon: const Icon(Icons.play_arrow_rounded),
+                color: Colors.white,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                bloc.forwardVideo(bloc.videoJumpSecond);
+              },
+              icon: const Icon(Icons.fast_forward_rounded),
+            ),
+            IconButton(
+              onPressed: () {
+                bloc.nextVideo();
+              },
+              icon: const Icon(Icons.skip_next_rounded),
+            ),
+            const SizedBox(width: 10),
+          ],
+        );
+      }
+    );
+  }
 }
 
 class _YoutubeVideoList extends StatelessWidget {
@@ -113,6 +177,7 @@ class _YoutubeVideoList extends StatelessWidget {
     final bloc = BlocProvider.of<HomeBloc>(context);
 
     return ListView.separated(
+        controller: bloc.scrollController,
         scrollDirection: Axis.vertical,
         shrinkWrap: true,
         itemCount: videoList.length,

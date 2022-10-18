@@ -1,4 +1,4 @@
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter/cupertino.dart';
 
 class YoutubeScraping {
   goSignInMenu(InAppWebViewController controller) async {
@@ -40,38 +40,50 @@ class YoutubeScraping {
 
   getListOfVideo(InAppWebViewController controller) async {
     var result = await controller.callAsyncJavaScript(functionBody:
-    """
-      var elements = window.document.getElementsByClassName('item');
-      var metadata = [];
-      
-      for (i=0; i < elements.length; i++) {
-        var elementTitle = elements[i].getElementsByClassName('media-item-headline');
-        var title = "";
-        if (elementTitle.length > 0) {
-          title = elementTitle[0].textContent;
+      """
+        var elements = window.document.getElementsByClassName('item');
+        var metadata = [];
+        
+        for (i=0; i < elements.length; i++) {
+          var elementTitle = elements[i].getElementsByClassName('media-item-headline');
+          var title = "";
+          if (elementTitle.length > 0) {
+            title = elementTitle[0].textContent;
+          }
+          
+          var info = elements[i].getElementsByClassName('ytm-badge-and-byline-item-byline');
+          var channel = "";
+          var createAt = "";
+          if (info.length > 2) {
+            channel = info[0].textContent;
+            createAt = info[2].textContent;
+          }
+          
+          var elementLink = elements[i].getElementsByClassName('media-item-thumbnail-container');
+          var link = "";
+          if (elementLink.length > 0) {
+            link = elementLink[0].href;
+          }
+          
+          metadata.push([title, channel, createAt, link]);
         }
         
-        var info = elements[i].getElementsByClassName('ytm-badge-and-byline-item-byline');
-        var channel = "";
-        var createAt = "";
-        if (info.length > 2) {
-          channel = info[0].textContent;
-          createAt = info[2].textContent;
-        }
-        
-        var elementLink = elements[i].getElementsByClassName('media-item-thumbnail-container');
-        var link = "";
-        if (elementLink.length > 0) {
-          link = elementLink[0].href;
-        }
-        
-        metadata.push([title, channel, createAt, link]);
-      }
-      
-      return metadata;
-    """
+        return metadata;
+      """
     );
 
     return result?.value;
+  }
+
+  void moveScrollToEnd(InAppWebViewController controller) async {
+    final result = await controller.evaluateJavascript(source:
+      """
+      var result = window.document.querySelector('.page-container').offsetHeight;
+      
+      return 1;
+      """
+    );
+
+    debugPrint('');
   }
 }
