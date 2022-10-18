@@ -58,7 +58,6 @@ class HomeBloc implements Bloc {
     // });
 
     // _googleSignIn.signInSilently();
-    debugPrint('');
   }
 
   @override
