@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:look_around_youtube/data/datasource/remote/youtube_scraping.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -57,6 +58,7 @@ class HomeBloc implements Bloc {
     // });
 
     // _googleSignIn.signInSilently();
+    debugPrint('');
   }
 
   @override
