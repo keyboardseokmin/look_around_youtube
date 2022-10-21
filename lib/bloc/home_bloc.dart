@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:look_around_youtube/data/datasource/remote/youtube_scraping.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../data/datasource/youtube_data.dart';
@@ -56,10 +57,24 @@ class HomeBloc implements Bloc {
   final _showControlButtons = StreamController<bool>()..add(false);
   Stream<bool> get showControlButtonsStream => _showControlButtons.stream;
 
+  late final HeadlessInAppWebView headlessWebView;
   HomeBloc() {
     // 리스트 스크롤뷰 페이지네이션
     scrollController.addListener(() {
     });
+
+    headlessWebView =  HeadlessInAppWebView(
+      initialUrlRequest: URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/')),
+      onWebViewCreated: (controller) { webViewController = controller; },
+      androidOnPermissionRequest: (controller, origin, resources) async {
+        return PermissionRequestResponse(
+            resources: resources,
+            action: PermissionRequestResponseAction.GRANT);
+      },
+      onLoadStop: (controller, url) { parseUrlAction(controller, url); },
+    );
+
+    headlessWebView.run();
   }
 
   @override
@@ -70,68 +85,80 @@ class HomeBloc implements Bloc {
   @override
   void dispose() {
     nowController?.dispose();
+    headlessWebView.dispose();
   }
 
   // webView page load 후 로직 처리
   void parseUrlAction(InAppWebViewController controller, Uri? url) async {
-    final urlString = url.toString();
-    // 구독 채널의 새로운 비디오 목록 페이지
-    if (urlString.contains('https://m.youtube.com/feed/subscriptions')) {
-      if (await _youtubeScraping.goSignInMenu(controller) == false) {
-        // 로그인 성공
-        _showWebView.add(false);
+    final type = _youtubeScraping.getLoadType(url);
+    if (type == null) return;
 
-        final listOfVideo = await _youtubeScraping.getListOfVideo(controller);
-        final listOfYoutubeVideo = getListOfYoutubeVideo(listOfVideo);
-
-        if (listOfYoutubeVideo.length < 30) {
-          _youtubeScraping.moveScrollToEnd(controller);
-        }
-
-        // 영상 리스트가 있는지 확인
-        if (listOfYoutubeVideo.isNotEmpty) {
-          // controller 정리 및 생성
-          final videoId = YoutubePlayer.convertUrlToId(listOfYoutubeVideo.first.videoUrl);
-          if (videoId != null) {
-            if (nowController == null) {
-              nowController = YoutubePlayerController(
-                initialVideoId: videoId,
-                flags: const YoutubePlayerFlags(
-                  autoPlay: false,
-                  enableCaption: false,
-                  hideControls: false,
-                  hideThumbnail: true,
-                  startAt: 30,
-                ),
-              );
-              _youtubePlayerController.add(nowController!);
-              _currentIndex = 0;
-            } else {
-              nowController?.load(videoId, startAt: startSecondAtVideo);
-              _currentIndex = 0;
-            }
-          }
-
-          showVideoAndButtons();
-          _showVideoEmptyMessage.add(false);
-        } else {
-          // 영상 리스트가 비었을 경우
-          hideVideoAndButtons();
-          _showVideoEmptyMessage.add(true);
-        }
-        // 영상 리스트 업데이트
-        _videoList.clear();
-        _videoList.addAll(listOfYoutubeVideo);
-        _videoListController.add(listOfYoutubeVideo);
-      } else {
-        // 로그인 페이지
-        _showWebView.sink.add(true);
-        hideVideoAndButtons();
-        _showVideoEmptyMessage.add(false);
-        _videoList.clear();
-        _videoListController.add(<YoutubeVideoData>[]);
-      }
+    switch (type) {
+      case LoadUrlType.signIn:
+        _signIn(controller);
+        break;
+      case LoadUrlType.listOfVideo:
+        _listOfVideo(controller);
+        break;
+      case LoadUrlType.userInfo:
+        break;
     }
+  }
+
+  void _signIn(InAppWebViewController controller) async {
+    if (await _youtubeScraping.parseGoSignInMenu(controller) == false) {
+      // 로그인 성공
+      _showWebView.add(false);
+      _youtubeScraping.getListOfVideo(controller);
+    } else {
+      // 로그인 페이지
+      _showWebView.add(true);
+      hideVideoAndButtons();
+      _showVideoEmptyMessage.add(false);
+      _videoList.clear();
+      _videoListController.add(<YoutubeVideoData>[]);
+    }
+  }
+
+  void _listOfVideo(InAppWebViewController controller) async {
+    final listOfVideo = await _youtubeScraping.parseGetListOfVideo(controller);
+    final listOfYoutubeVideo = getListOfYoutubeVideo(listOfVideo);
+
+    // 영상 리스트가 있는지 확인
+    if (listOfYoutubeVideo.isNotEmpty) {
+      // controller 정리 및 생성
+      final videoId = YoutubePlayer.convertUrlToId(listOfYoutubeVideo.first.videoUrl);
+      if (videoId != null) {
+        if (nowController == null) {
+          nowController = YoutubePlayerController(
+            initialVideoId: videoId,
+            flags: const YoutubePlayerFlags(
+              autoPlay: false,
+              enableCaption: false,
+              hideControls: false,
+              hideThumbnail: true,
+              startAt: 30,
+            ),
+          );
+          _youtubePlayerController.add(nowController!);
+          _currentIndex = 0;
+        } else {
+          nowController?.load(videoId, startAt: startSecondAtVideo);
+          _currentIndex = 0;
+        }
+      }
+
+      showVideoAndButtons();
+      _showVideoEmptyMessage.add(false);
+    } else {
+      // 영상 리스트가 비었을 경우
+      hideVideoAndButtons();
+      _showVideoEmptyMessage.add(true);
+    }
+    // 영상 리스트 업데이트
+    _videoList.clear();
+    _videoList.addAll(listOfYoutubeVideo);
+    _videoListController.add(listOfYoutubeVideo);
   }
 
   void hideVideoAndButtons() {

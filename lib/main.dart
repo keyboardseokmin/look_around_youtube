@@ -1,13 +1,10 @@
-import 'dart:ui';
-
 import 'package:easy_localization/easy_localization.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:look_around_youtube/bloc/bloc_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:look_around_youtube/ui/app_colors.dart';
-import 'package:look_around_youtube/ui/home_screen.dart';
-import 'bloc/home_bloc.dart';
+
 import 'injection_container.dart' as ic;
+import 'ui/intro.dart';
 
 
 void main() async {
@@ -60,10 +57,7 @@ class MyApp extends StatelessWidget {
           bodyText2: TextStyle(color: AppColors.black),
         ),
       ),
-      home: BlocProvider<HomeBloc>(
-        bloc: HomeBloc(),
-        child: const HomeScreen(),
-      ),
+      home: const Intro(),
     );
   }
 }

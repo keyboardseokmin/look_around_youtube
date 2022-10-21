@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../bloc/bloc_provider.dart';
@@ -48,11 +49,10 @@ class HomeScreen extends StatelessWidget {
                     action: PermissionRequestResponseAction.GRANT);
               },
               onLoadStop: (controller, url) {
-                debugPrint(url.toString());
                 bloc.parseUrlAction(controller, url);
               },
             )
-            )
+          )
         );
       },
     );
@@ -121,47 +121,51 @@ class HomeScreen extends StatelessWidget {
     return StreamBuilder<bool>(
       stream: bloc.showControlButtonsStream,
       builder: (context, snapshot) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const SizedBox(width: 10),
-            IconButton(
-              onPressed: () {
-                bloc.previousVideo();
-              },
-              icon: const Icon(Icons.skip_previous_rounded),
-            ),
-            IconButton(
-              onPressed: () {
-                bloc.rewindVideo(bloc.videoJumpSecond);
-              },
-              icon: const Icon(Icons.fast_rewind_rounded),
-            ),
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.black87,
-              child: IconButton(
-                onPressed: () {},
-                // pause_rounded 
-                icon: const Icon(Icons.play_arrow_rounded),
-                color: Colors.white,
+        if (snapshot.data == true) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const SizedBox(width: 10),
+              IconButton(
+                onPressed: () {
+                  bloc.previousVideo();
+                },
+                icon: const Icon(Icons.skip_previous_rounded),
               ),
-            ),
-            IconButton(
-              onPressed: () {
-                bloc.forwardVideo(bloc.videoJumpSecond);
-              },
-              icon: const Icon(Icons.fast_forward_rounded),
-            ),
-            IconButton(
-              onPressed: () {
-                bloc.nextVideo();
-              },
-              icon: const Icon(Icons.skip_next_rounded),
-            ),
-            const SizedBox(width: 10),
-          ],
-        );
+              IconButton(
+                onPressed: () {
+                  bloc.rewindVideo(bloc.videoJumpSecond);
+                },
+                icon: const Icon(Icons.fast_rewind_rounded),
+              ),
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.black87,
+                child: IconButton(
+                  onPressed: () {},
+                  // pause_rounded
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  color: Colors.white,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  bloc.forwardVideo(bloc.videoJumpSecond);
+                },
+                icon: const Icon(Icons.fast_forward_rounded),
+              ),
+              IconButton(
+                onPressed: () {
+                  bloc.nextVideo();
+                },
+                icon: const Icon(Icons.skip_next_rounded),
+              ),
+              const SizedBox(width: 10),
+            ],
+          );
+        } else {
+          return Container();
+        }
       }
     );
   }
