@@ -8,6 +8,7 @@ class AppColors {
   static Color get white => const Color(0xFFFFFFFF);
   static const Color _blackPrimaryColor = Color(0xFF333333);
   static const Color _greenPrimaryColor = Color(0xFF158443);
+  static const Color textGray = Color(0xFF757575);
 }
 
 extension _Material on Color {
