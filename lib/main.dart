@@ -1,16 +1,27 @@
-import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:look_around_youtube/bloc/bloc_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:look_around_youtube/ui/app_colors.dart';
-import 'package:look_around_youtube/ui/home_screen.dart';
-import 'bloc/home_bloc.dart';
+
 import 'injection_container.dart' as ic;
+import 'ui/intro.dart';
 
 
 void main() async {
   ic.init();
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  await EasyLocalization.ensureInitialized();
+  runApp(
+    // 언어설정
+    EasyLocalization(
+        // 지원 언어 리스트
+        supportedLocales: const [Locale('en'), Locale('ko')],
+        path: 'assets/translations',
+        // 지원 언어 이외의 시작 언어
+        fallbackLocale: const Locale('en'),
+        child: const MyApp()
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,6 +34,9 @@ class MyApp extends StatelessWidget {
     );
 
     return MaterialApp(
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       debugShowCheckedModeBanner: false,
       title: 'Look around Youtube',
       theme: ThemeData(
@@ -43,10 +57,7 @@ class MyApp extends StatelessWidget {
           bodyText2: TextStyle(color: AppColors.black),
         ),
       ),
-      home: BlocProvider<HomeBloc>(
-        bloc: HomeBloc(),
-        child: const HomeScreen(),
-      ),
+      home: const Intro(),
     );
   }
 }
