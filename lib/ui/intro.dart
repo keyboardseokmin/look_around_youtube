@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:look_around_youtube/bloc/bloc_provider.dart';
 import 'package:look_around_youtube/bloc/home_bloc.dart';
+import 'package:look_around_youtube/bloc/login_bloc.dart';
 import 'package:look_around_youtube/data/datasource/remote/youtube_scraping.dart';
 import 'package:look_around_youtube/injection_container.dart';
 import 'package:look_around_youtube/ui/home_screen.dart';
@@ -80,14 +81,15 @@ class Intro extends StatelessWidget {
 
   void _moveToLogin(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.push(
+      Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) {
-            return BlocProvider<HomeBloc>(
-              bloc: HomeBloc(),
-              child: const HomeScreen(),
-            );
-          })
+          PageTransition(
+            type: PageTransitionType.fade,
+            child: BlocProvider<LoginBloc>(
+              bloc: LoginBloc(),
+              child: const LoginScreen(),
+            )
+          )
       );
     });
   }

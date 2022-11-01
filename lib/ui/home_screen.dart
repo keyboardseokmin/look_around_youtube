@@ -1,11 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:look_around_youtube/web_control.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../bloc/bloc_provider.dart';
 import '../bloc/home_bloc.dart';
+import '../data/datasource/remote/youtube_scraping.dart';
 import '../data/datasource/youtube_data.dart';
+import '../injection_container.dart';
 import 'app_colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -14,12 +16,12 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<HomeBloc>(context);
+    bloc.loadVideos();
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            _buildWebView(bloc),
             _buildYoutubePlayer(bloc),
             _buildVideoEmptyMessage(bloc),
             _buildVideoList(bloc),
@@ -27,34 +29,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildWebView(HomeBloc bloc) {
-    return StreamBuilder<bool>(
-      stream: bloc.showWebViewStream,
-      builder: (context, snapshot) {
-        return Visibility(
-            visible: (snapshot.data == true),
-            child: Expanded(child:
-            InAppWebView(
-              initialUrlRequest: bloc.initUri,
-              initialOptions: bloc.options,
-              onWebViewCreated: (controller) {
-                bloc.webViewController = controller;
-              },
-              androidOnPermissionRequest: (controller, origin, resources) async {
-                return PermissionRequestResponse(
-                    resources: resources,
-                    action: PermissionRequestResponseAction.GRANT);
-              },
-              onLoadStop: (controller, url) {
-                bloc.parseUrlAction(controller, url);
-              },
-            )
-          )
-        );
-      },
     );
   }
 

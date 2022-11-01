@@ -1,12 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-enum LoadUrlType { isLogin, signIn, listOfVideo, userInfo }
+enum LoadUrlType { isLogin, signIn, logOut, listOfVideo, userInfo }
 
 class YoutubeScraping {
   final Map<String, LoadUrlType> _loadUrlType = {};
+  final loggedOutUrl = 'https://m.youtube.com/?noapp=1/';
+
   void loadUrlWrapping(InAppWebViewController controller, URLRequest urlRequest, LoadUrlType type) {
-    _loadUrlType[urlRequest.url.toString()] = type;
+    // logout 시 google account 페이지로 접속
+    if (type == LoadUrlType.logOut) {
+      _loadUrlType[loggedOutUrl] = type;
+    } else {
+      _loadUrlType[urlRequest.url.toString()] = type;
+    }
     controller.loadUrl(urlRequest: urlRequest);
   }
 
@@ -15,11 +22,14 @@ class YoutubeScraping {
     if (urlString[urlString.length - 1] != '/') {
       urlString = '$urlString/';
     }
+    // logout 시 google account 페이지로 접속
     final type = _loadUrlType[urlString];
     _loadUrlType.remove(urlString);
+
     return type;
   }
 
+  // 로그인 상태 확인
   void isLoggedIn(InAppWebViewController controller) {
     var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/'));
     loadUrlWrapping(controller, url, LoadUrlType.isLogin);
@@ -27,16 +37,16 @@ class YoutubeScraping {
 
   Future<bool> parseIsLoggedIn(InAppWebViewController controller) async {
     final result = await controller.callAsyncJavaScript(functionBody:
-    """
+      """
       var p = new Promise(function(resolve, reject) {
         setTimeout(function() {
           // video list 유무로 로그인 상태 판단
           var elementVideos = window.document.getElementsByClassName('channel-list-sub-menu-avatars');
           if (elementVideos.length < 1) {
-            // video 가 하나도 없으면 로그인 진행
+            // video 가 하나도 없으면 비로그인 상태
             resolve(false);
           } else {
-            // video 가 있으면 스크래핑 진행
+            // video 가 있으면 로그인 상태
             resolve(true);
           }
         }, 1000);
@@ -49,15 +59,39 @@ class YoutubeScraping {
     return result?.value;
   }
 
+  // 로그인 메뉴로 이동
   void goSignInMenu(InAppWebViewController controller) {
+    var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/'));
+    loadUrlWrapping(controller, url, LoadUrlType.signIn);
+  }
+
+  void parseGoSignInMenu(InAppWebViewController controller) async {
+    await controller.callAsyncJavaScript(functionBody:
+      """
+        var buttons = window.document.getElementsByClassName('icon-button');
+        if (buttons.length > 2) {
+          buttons[2].click();
+          // 우측 상단 점세개 서브 메뉴
+          setTimeout(function() {
+            var buttons = window.document.getElementsByClassName('compact-link-endpoint');
+            if (buttons.length > 0) {
+              buttons[0].click();
+            }
+          }, 200);
+        }
+      """
+    );
+  }
+
+  // 사용하는 곳이 있는지 확인 필요
+  // 로그인 상태면 false 로그아웃 상태면 로그인 화면 이동 후 true
+  void isLoginAndSignIn(InAppWebViewController controller) {
     var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/'));
     loadUrlWrapping(controller, url, LoadUrlType.signIn);
   }
 
-  parseGoSignInMenu(InAppWebViewController controller) async {
+  Future<bool> parseIsLoginAndSignIn(InAppWebViewController controller) async {
     final result = await controller.callAsyncJavaScript(functionBody:
-      // 되는 기기가 있고 안되는 기기가 있음
-      // "window.document.querySelector('[aria-label=\"Account\"]').click();"
       """
       var p = new Promise(function(resolve, reject) {
         setTimeout(function() {
@@ -91,6 +125,13 @@ class YoutubeScraping {
     return result?.value;
   }
 
+  // 로그아웃
+  void logOut(InAppWebViewController controller) {
+    var url = URLRequest(url: Uri.parse('https://m.youtube.com/logout/'));
+    loadUrlWrapping(controller, url, LoadUrlType.logOut);
+  }
+
+  // 비디오 리스트 가져오기
   void getListOfVideo(InAppWebViewController controller) {
     var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/'));
     loadUrlWrapping(controller, url, LoadUrlType.listOfVideo);
@@ -99,8 +140,11 @@ class YoutubeScraping {
   parseGetListOfVideo(InAppWebViewController controller) async {
     final result = await controller.callAsyncJavaScript(functionBody:
       """
-        var elements = window.document.getElementsByClassName('item');
+        // var elements = window.document.getElementsByClassName('item');
+        var elements = window.document.getElementsByTagName('ytm-video-with-context-renderer');
         var metadata = [];
+        
+        alert(elements.length);
         
         for (i=0; i < elements.length; i++) {
           var elementTitle = elements[i].getElementsByClassName('media-item-headline');
@@ -133,13 +177,13 @@ class YoutubeScraping {
     return result?.value;
   }
 
+  // 유저 정보 가져오기
   void getUserInfo(InAppWebViewController controller) {
     var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/library/'));
     loadUrlWrapping(controller, url, LoadUrlType.userInfo);
   }
 
   parseGetUserInfo(InAppWebViewController controller) async {
-
     final result = await controller.callAsyncJavaScript(functionBody:
       """
       var buttons = window.document.getElementsByClassName('topbar-menu-button-avatar-button');
