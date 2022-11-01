@@ -13,12 +13,12 @@ class HomeBloc implements Bloc {
   final _webControl = getIt<WebControl>();
 
   final youtubeUrlPrefix = "watch?v=";
-  final youtubeVideoList = <YoutubeVideoData>[];
 
   var startSecondAtVideo = 30;
   var videoJumpSecond = 10;
   int? _currentIndex = 0;
 
+  // video listView scroll controller
   final scrollController = ScrollController();
 
   // Youtube Player 관련
@@ -40,6 +40,12 @@ class HomeBloc implements Bloc {
   final _showControlButtons = StreamController<bool>()..add(false);
   Stream<bool> get showControlButtonsStream => _showControlButtons.stream;
 
+  HomeBloc() {
+    _webControl.videoListStream.listen((event) {
+      _getListOfVideo(event);
+    });
+  }
+
   @override
   void deactivate() {
     nowController?.pause();
@@ -54,29 +60,8 @@ class HomeBloc implements Bloc {
     _api.getListOfVideo(_webControl.webViewController);
   }
 
-  // webView page load 후 로직 처리
-  void parseUrlAction(InAppWebViewController controller, Uri? url) async {
-    final type = _api.getLoadType(url);
-    if (type == null) return;
-
-    switch (type) {
-      case LoadUrlType.signIn:
-        break;
-      case LoadUrlType.listOfVideo:
-        _listOfVideo(controller);
-        break;
-      case LoadUrlType.userInfo:
-        break;
-      case LoadUrlType.isLogin:
-        break;
-      case LoadUrlType.logOut:
-        break;
-    }
-  }
-
-  void _listOfVideo(InAppWebViewController controller) async {
-    final listOfVideo = await _api.parseGetListOfVideo(controller);
-    final listOfYoutubeVideo = getListOfYoutubeVideo(listOfVideo);
+  void _getListOfVideo(List<dynamic> list) async {
+    final listOfYoutubeVideo = _getListOfYoutubeVideo(list);
 
     // 영상 리스트가 있는지 확인
     if (listOfYoutubeVideo.isNotEmpty) {
@@ -115,17 +100,7 @@ class HomeBloc implements Bloc {
     _videoListController.add(listOfYoutubeVideo);
   }
 
-  void hideVideoAndButtons() {
-    _showYoutubeVideo.add(false);
-    _showControlButtons.add(false);
-  }
-
-  void showVideoAndButtons() {
-    _showYoutubeVideo.add(true);
-    _showControlButtons.add(true);
-  }
-
-  List<YoutubeVideoData> getListOfYoutubeVideo(List<dynamic> list) {
+  List<YoutubeVideoData> _getListOfYoutubeVideo(List<dynamic> list) {
     final result = <YoutubeVideoData>[];
     for (final video in list) {
       if (video is List) {
@@ -139,6 +114,16 @@ class HomeBloc implements Bloc {
       }
     }
     return result;
+  }
+
+  void hideVideoAndButtons() {
+    _showYoutubeVideo.add(false);
+    _showControlButtons.add(false);
+  }
+
+  void showVideoAndButtons() {
+    _showYoutubeVideo.add(true);
+    _showControlButtons.add(true);
   }
 
   // video list 에 있는 영상 선택

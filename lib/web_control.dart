@@ -36,7 +36,8 @@ class WebControl {
   final _isLoggedInController = StreamController<bool>.broadcast();
   Stream<bool> get isLoggedInStream => _isLoggedInController.stream;
   // 구독 video list 불러오기
-  final _videoList = StreamController<List>();
+  final _videoList = StreamController<List>.broadcast();
+  Stream<List> get videoListStream => _videoList.stream;
 
   // webView page load 후 로직 처리
   void parseUrlAction(InAppWebViewController controller, Uri? url) async {
@@ -50,7 +51,7 @@ class WebControl {
       case LoadUrlType.signIn:
         break;
       case LoadUrlType.listOfVideo:
-        final test = await _youtubeScraping.parseGetListOfVideo(webViewController);
+        _videoList.add(await _youtubeScraping.parseGetListOfVideo(webViewController));
         break;
       case LoadUrlType.userInfo:
         break;

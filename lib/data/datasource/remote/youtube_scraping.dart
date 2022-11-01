@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
@@ -138,13 +140,11 @@ class YoutubeScraping {
   }
 
   parseGetListOfVideo(InAppWebViewController controller) async {
+    sleep(const Duration(seconds: 1));
     final result = await controller.callAsyncJavaScript(functionBody:
       """
-        // var elements = window.document.getElementsByClassName('item');
-        var elements = window.document.getElementsByTagName('ytm-video-with-context-renderer');
+        var elements = window.document.getElementsByClassName('item');
         var metadata = [];
-        
-        alert(elements.length);
         
         for (i=0; i < elements.length; i++) {
           var elementTitle = elements[i].getElementsByClassName('media-item-headline');
