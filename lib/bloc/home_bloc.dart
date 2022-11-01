@@ -2,38 +2,24 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:look_around_youtube/data/datasource/remote/youtube_scraping.dart';
+import 'package:look_around_youtube/web_control.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../data/datasource/youtube_data.dart';
 import '../injection_container.dart';
 import 'bloc.dart';
 
 class HomeBloc implements Bloc {
-  final _youtubeScraping = getIt<YoutubeScraping>();
+  final _api = getIt<YoutubeScraping>();
+  final _webControl = getIt<WebControl>();
 
   final youtubeUrlPrefix = "watch?v=";
-  final youtubeVideoList = <YoutubeVideoData>[];
 
   var startSecondAtVideo = 30;
   var videoJumpSecond = 10;
   int? _currentIndex = 0;
 
+  // video listView scroll controller
   final scrollController = ScrollController();
-
-  // WebView 관련
-  InAppWebViewController? webViewController;
-  final URLRequest initUri = URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/'));
-  final InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
-      crossPlatform: InAppWebViewOptions(
-        useShouldOverrideUrlLoading: true,
-        mediaPlaybackRequiresUserGesture: false,
-      ),
-      android: AndroidInAppWebViewOptions(
-        useHybridComposition: true,
-      ),
-      ios: IOSInAppWebViewOptions(
-        allowsInlineMediaPlayback: true,
-      )
-  );
 
   // Youtube Player 관련
   // Youtube Player Controller
@@ -44,9 +30,6 @@ class HomeBloc implements Bloc {
   final _videoList = <YoutubeVideoData>[];
   final _videoListController = StreamController<List<YoutubeVideoData>>();
   Stream<List<YoutubeVideoData>> get videoListStream => _videoListController.stream;
-  // 로그인에 사용하는 webView 보여줄지 유무
-  final _showWebView = StreamController<bool>()..add(true);
-  Stream<bool> get showWebViewStream => _showWebView.stream;
   // youtube player 보여줄지 유무
   final _showYoutubeVideo = StreamController<bool>()..add(false);
   Stream<bool> get showYoutubeVideoStream => _showYoutubeVideo.stream;
@@ -57,24 +40,10 @@ class HomeBloc implements Bloc {
   final _showControlButtons = StreamController<bool>()..add(false);
   Stream<bool> get showControlButtonsStream => _showControlButtons.stream;
 
-  late final HeadlessInAppWebView headlessWebView;
   HomeBloc() {
-    // 리스트 스크롤뷰 페이지네이션
-    scrollController.addListener(() {
+    _webControl.videoListStream.listen((event) {
+      _getListOfVideo(event);
     });
-
-    headlessWebView =  HeadlessInAppWebView(
-      initialUrlRequest: URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/')),
-      onWebViewCreated: (controller) { webViewController = controller; },
-      androidOnPermissionRequest: (controller, origin, resources) async {
-        return PermissionRequestResponse(
-            resources: resources,
-            action: PermissionRequestResponseAction.GRANT);
-      },
-      onLoadStop: (controller, url) { parseUrlAction(controller, url); },
-    );
-
-    headlessWebView.run();
   }
 
   @override
@@ -85,44 +54,14 @@ class HomeBloc implements Bloc {
   @override
   void dispose() {
     nowController?.dispose();
-    headlessWebView.dispose();
   }
 
-  // webView page load 후 로직 처리
-  void parseUrlAction(InAppWebViewController controller, Uri? url) async {
-    final type = _youtubeScraping.getLoadType(url);
-    if (type == null) return;
-
-    switch (type) {
-      case LoadUrlType.signIn:
-        _signIn(controller);
-        break;
-      case LoadUrlType.listOfVideo:
-        _listOfVideo(controller);
-        break;
-      case LoadUrlType.userInfo:
-        break;
-    }
+  void loadVideos() {
+    _api.getListOfVideo(_webControl.webViewController);
   }
 
-  void _signIn(InAppWebViewController controller) async {
-    if (await _youtubeScraping.parseGoSignInMenu(controller) == false) {
-      // 로그인 성공
-      _showWebView.add(false);
-      _youtubeScraping.getListOfVideo(controller);
-    } else {
-      // 로그인 페이지
-      _showWebView.add(true);
-      hideVideoAndButtons();
-      _showVideoEmptyMessage.add(false);
-      _videoList.clear();
-      _videoListController.add(<YoutubeVideoData>[]);
-    }
-  }
-
-  void _listOfVideo(InAppWebViewController controller) async {
-    final listOfVideo = await _youtubeScraping.parseGetListOfVideo(controller);
-    final listOfYoutubeVideo = getListOfYoutubeVideo(listOfVideo);
+  void _getListOfVideo(List<dynamic> list) async {
+    final listOfYoutubeVideo = _getListOfYoutubeVideo(list);
 
     // 영상 리스트가 있는지 확인
     if (listOfYoutubeVideo.isNotEmpty) {
@@ -161,17 +100,7 @@ class HomeBloc implements Bloc {
     _videoListController.add(listOfYoutubeVideo);
   }
 
-  void hideVideoAndButtons() {
-    _showYoutubeVideo.add(false);
-    _showControlButtons.add(false);
-  }
-
-  void showVideoAndButtons() {
-    _showYoutubeVideo.add(true);
-    _showControlButtons.add(true);
-  }
-
-  List<YoutubeVideoData> getListOfYoutubeVideo(List<dynamic> list) {
+  List<YoutubeVideoData> _getListOfYoutubeVideo(List<dynamic> list) {
     final result = <YoutubeVideoData>[];
     for (final video in list) {
       if (video is List) {
@@ -185,6 +114,16 @@ class HomeBloc implements Bloc {
       }
     }
     return result;
+  }
+
+  void hideVideoAndButtons() {
+    _showYoutubeVideo.add(false);
+    _showControlButtons.add(false);
+  }
+
+  void showVideoAndButtons() {
+    _showYoutubeVideo.add(true);
+    _showControlButtons.add(true);
   }
 
   // video list 에 있는 영상 선택
