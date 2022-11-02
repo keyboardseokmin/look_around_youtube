@@ -10,6 +10,7 @@ import 'package:look_around_youtube/web_control.dart';
 import 'package:page_transition/page_transition.dart';
 
 import 'login_screen.dart';
+import 'navigation_screen.dart';
 
 class Intro extends StatelessWidget {
   const Intro({super.key});
@@ -41,11 +42,11 @@ class Intro extends StatelessWidget {
                     builder: (context, snapshot) {
                       if (snapshot.data == true) {
                         // 영상 리스트 화면으로
-                        _moveToHomeScreen(context);
+                        _moveToBottomTabScreen(context, 0);
                         return Container();
                       } else if (snapshot.data == false) {
                         // login 화면으로
-                        _moveToLogin(context);
+                        _moveToBottomTabScreen(context, 1);
                         return Container();
                       } else {
                         return const SpinKitWave(
@@ -64,31 +65,13 @@ class Intro extends StatelessWidget {
     );
   }
 
-  void _moveToHomeScreen(BuildContext context) {
+  void _moveToBottomTabScreen(BuildContext context, int initialIndex) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacement(
           context,
           PageTransition(
-            type: PageTransitionType.fade,
-            child: BlocProvider<HomeBloc>(
-              bloc: HomeBloc(),
-              child: const HomeScreen()
-            )
-          )
-      );
-    });
-  }
-
-  void _moveToLogin(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacement(
-          context,
-          PageTransition(
-            type: PageTransitionType.fade,
-            child: BlocProvider<LoginBloc>(
-              bloc: LoginBloc(),
-              child: const LoginScreen(),
-            )
+              type: PageTransitionType.fade,
+              child: NavigationScreen(initialIndex: initialIndex)
           )
       );
     });
