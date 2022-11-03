@@ -38,20 +38,11 @@ class HomeScreen extends StatelessWidget {
         builder: (context, snapshot) {
           return Visibility(
             visible: (snapshot.data == true),
-            child: StreamBuilder<YoutubePlayerController>(
-              stream: bloc.youtubePlayerControllerStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return YoutubePlayer(
-                    controller: snapshot.data!,
-                    showVideoProgressIndicator: true,
-                    onReady: () {},
-                  );
-                } else {
-                  return Container();
-                }
-              },
-            ),
+            child: YoutubePlayer(
+              controller: bloc.playerController,
+              showVideoProgressIndicator: true,
+              onReady: () {},
+            )
           );
         }
     );

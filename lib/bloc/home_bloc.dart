@@ -22,25 +22,33 @@ class HomeBloc implements Bloc {
   final scrollController = ScrollController();
 
   // Youtube Player 관련
-  // Youtube Player Controller
-  YoutubePlayerController? nowController;
-  final _youtubePlayerController = StreamController<YoutubePlayerController>();
-  Stream<YoutubePlayerController> get youtubePlayerControllerStream => _youtubePlayerController.stream;
+  late final YoutubePlayerController playerController;
   // 새로운 video list
   final _videoList = <YoutubeVideoData>[];
-  final _videoListController = StreamController<List<YoutubeVideoData>>();
+  final _videoListController = StreamController<List<YoutubeVideoData>>.broadcast();
   Stream<List<YoutubeVideoData>> get videoListStream => _videoListController.stream;
   // youtube player 보여줄지 유무
-  final _showYoutubeVideo = StreamController<bool>()..add(false);
+  final _showYoutubeVideo = StreamController<bool>.broadcast()..add(false);
   Stream<bool> get showYoutubeVideoStream => _showYoutubeVideo.stream;
   // video empty message 보여줄지 유무
-  final _showVideoEmptyMessage = StreamController<bool>()..add(false);
+  final _showVideoEmptyMessage = StreamController<bool>.broadcast()..add(false);
   Stream<bool> get showVideoEmptyMessageStream => _showVideoEmptyMessage.stream;
   // 영상 재생 관련 버튼 보여줄지 유무
-  final _showControlButtons = StreamController<bool>()..add(false);
+  final _showControlButtons = StreamController<bool>.broadcast()..add(false);
   Stream<bool> get showControlButtonsStream => _showControlButtons.stream;
 
   HomeBloc() {
+    playerController = YoutubePlayerController(
+      initialVideoId: '',
+      flags: const YoutubePlayerFlags(
+        autoPlay: false,
+        enableCaption: false,
+        hideControls: false,
+        hideThumbnail: true,
+        startAt: 30,
+      ),
+    );
+
     _webControl.videoListStream.listen((event) {
       _getListOfVideo(event);
     });
@@ -48,12 +56,12 @@ class HomeBloc implements Bloc {
 
   @override
   void deactivate() {
-    nowController?.pause();
+    playerController.pause();
   }
 
   @override
   void dispose() {
-    nowController?.dispose();
+    playerController.dispose();
   }
 
   void loadVideos() {
@@ -65,26 +73,10 @@ class HomeBloc implements Bloc {
 
     // 영상 리스트가 있는지 확인
     if (listOfYoutubeVideo.isNotEmpty) {
-      // controller 정리 및 생성
       final videoId = YoutubePlayer.convertUrlToId(listOfYoutubeVideo.first.videoUrl);
       if (videoId != null) {
-        if (nowController == null) {
-          nowController = YoutubePlayerController(
-            initialVideoId: videoId,
-            flags: const YoutubePlayerFlags(
-              autoPlay: false,
-              enableCaption: false,
-              hideControls: false,
-              hideThumbnail: true,
-              startAt: 30,
-            ),
-          );
-          _youtubePlayerController.add(nowController!);
-          _currentIndex = 0;
-        } else {
-          nowController?.load(videoId, startAt: startSecondAtVideo);
-          _currentIndex = 0;
-        }
+        playerController.load(videoId, startAt: startSecondAtVideo);
+        _currentIndex = 0;
       }
 
       showVideoAndButtons();
@@ -132,7 +124,7 @@ class HomeBloc implements Bloc {
       // nowController?.pause();
       final videoId = YoutubePlayer.convertUrlToId(_videoList[index].videoUrl);
       if (videoId != null) {
-        nowController?.load(videoId, startAt: startSecondAtVideo);
+        playerController.load(videoId, startAt: startSecondAtVideo);
         _currentIndex = index;
       }
     }
@@ -140,35 +132,31 @@ class HomeBloc implements Bloc {
 
   // 뒤로 second 초 만큼
   void rewindVideo(int second) {
-    if (nowController != null) {
-      final currentTime = nowController!.value.position;
-      nowController!.seekTo(currentTime + Duration(seconds: -second));
-    }
+    final currentTime = playerController.value.position;
+    playerController.seekTo(currentTime + Duration(seconds: -second));
   }
   // 뒤로 second 초 만큼
   void forwardVideo(int second) {
-    if (nowController != null) {
-      final currentTime = nowController!.value.position;
-      nowController!.seekTo(currentTime + Duration(seconds: second));
-    }
+    final currentTime = playerController.value.position;
+    playerController.seekTo(currentTime + Duration(seconds: second));
   }
 
   // 이전 영상
   void previousVideo() {
-    if (nowController != null && _currentIndex != null && _currentIndex != 0) {
+    if (_currentIndex != null && _currentIndex != 0) {
       final videoId = YoutubePlayer.convertUrlToId(_videoList[_currentIndex! - 1].videoUrl);
       if (videoId != null) {
-        nowController?.load(videoId, startAt: startSecondAtVideo);
+        playerController.load(videoId, startAt: startSecondAtVideo);
         _currentIndex = _currentIndex! - 1;
       }
     }
   }
   // 다음 영상
   void nextVideo() {
-    if (nowController != null && _currentIndex != null && _currentIndex != _videoList.length - 1) {
+    if (_currentIndex != null && _currentIndex != _videoList.length - 1) {
       final videoId = YoutubePlayer.convertUrlToId(_videoList[_currentIndex! + 1].videoUrl);
       if (videoId != null) {
-        nowController?.load(videoId, startAt: startSecondAtVideo);
+        playerController.load(videoId, startAt: startSecondAtVideo);
         _currentIndex = _currentIndex! + 1;
       }
     }
