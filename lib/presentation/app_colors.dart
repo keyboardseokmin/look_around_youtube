@@ -5,10 +5,11 @@ class AppColors {
   static MaterialColor get black => _blackPrimaryColor.toMaterialColor();
   static MaterialAccentColor get green => _greenPrimaryColor.toMaterialAccentColor();
   static Color get grey => const Color(0xFFF2F6FA);
-  static Color get white => const Color(0xFFFFFFFF);
   static const Color _blackPrimaryColor = Color(0xFF333333);
   static const Color _greenPrimaryColor = Color(0xFF158443);
+  static const Color white = Color(0xFFFFFFFF);
   static const Color textGray = Color(0xFF757575);
+  static const Color listSelected = Color(0x11000000);
 }
 
 extension _Material on Color {

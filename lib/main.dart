@@ -1,14 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:look_around_youtube/ui/app_colors.dart';
-
-import 'injection_container.dart' as ic;
-import 'ui/intro.dart';
+import 'package:look_around_youtube/presentation/app_colors.dart';
+import 'package:look_around_youtube/presentation/ui/intro.dart';
 
 
 void main() async {
-  ic.init();
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   runApp(
@@ -19,7 +17,7 @@ void main() async {
         path: 'assets/translations',
         // 지원 언어 이외의 시작 언어
         fallbackLocale: const Locale('en'),
-        child: const MyApp()
+        child: const ProviderScope(child: MyApp())
     ),
   );
 }

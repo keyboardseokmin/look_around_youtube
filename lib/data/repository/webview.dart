@@ -1,15 +1,16 @@
-import 'dart:async';
-
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/datasource/remote/youtube_scraping.dart';
-import '../injection_container.dart';
-import '../web_control.dart';
-import 'bloc.dart';
+import '../../provider/providers.dart';
+import '../datasource/remote/scrape_youtube.dart';
 
-class LoginBloc implements Bloc {
-  final _api = getIt<YoutubeScraping>();
-  final webControl = getIt<WebControl>();
+final webViewProvider = Provider<WebView>(WebView.new);
+
+class WebView {
+  final Ref ref;
+
+  WebView(this.ref);
+
   // WebView 관련
   InAppWebViewController? webViewController;
   final URLRequest initUri = URLRequest(url: Uri.parse('https://m.youtube.com/feed/'));
@@ -28,20 +29,21 @@ class LoginBloc implements Bloc {
 
   // webView page load 후 로직 처리
   void parseUrlAction(InAppWebViewController controller, Uri url) async {
-    final type = _api.getLoadType(url);
+    final scrapYoutube = ref.read(scrapYoutubeProvider);
+    final headlessWebView = ref.read(headlessWebViewProvider);
+
+    final type = scrapYoutube.getLoadType(url);
 
     if (type == LoadUrlType.signIn) {
-      _api.parseGoSignInMenu(controller);
+      scrapYoutube.parseGoSignInMenu(controller);
     } else if (type == null) {
-      _api.isLoggedIn(webControl.webViewController);
+      scrapYoutube.isLoggedIn(headlessWebView.webViewController);
     }
   }
 
-  @override
-  void deactivate() {
-  }
-
-  @override
-  void dispose() {
+  void signIn() {
+    if (webViewController != null) {
+      ref.read(scrapYoutubeProvider).goSignInMenu(webViewController!);
+    }
   }
 }
