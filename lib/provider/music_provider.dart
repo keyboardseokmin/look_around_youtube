@@ -25,13 +25,24 @@ class Music {
       ),
     );
     playerController.addListener(() {
-      ref.read(playerState.notifier).state = playerController.value.playerState;
-      debugPrint(ref.read(playerState.notifier).state.toString());
+      ref.read(playerStateProvider.notifier).state = playerController.value.playerState;
+      debugPrint(ref.read(playerStateProvider.notifier).state.toString());
     });
   }
 
   void loadVideos() {
     ref.read(headlessWebViewProvider).getListOfVideo();
+  }
+
+  void moveToScroll(int before, int after) {
+    final divideCount = ref.read(videoListProvider).length - 2;
+    final positionRatio = scrollController.position.maxScrollExtent / divideCount;
+    final destPosition = positionRatio;
+    scrollController.animateTo(
+      destPosition,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.ease
+    );
   }
 
   // video list 에 있는 영상 선택
@@ -42,7 +53,7 @@ class Music {
       final videoId = YoutubePlayer.convertUrlToId(videoList[index].videoUrl);
       if (videoId != null) {
         playerController.load(videoId, startAt: ref.read(startSecondAtVideoProvider));
-        ref.read(currentIndex.notifier).state = index;
+        ref.read(currentIndexProvider.notifier).state = index;
       }
     }
   }
@@ -69,23 +80,43 @@ class Music {
 
   // 이전 영상
   void previousVideo() {
-    final index = ref.read(currentIndex);
+    final index = ref.read(currentIndexProvider);
     if (index != null && index != 0) {
       final videoId = YoutubePlayer.convertUrlToId(ref.read(videoListProvider)[index - 1].videoUrl);
       if (videoId != null) {
         playerController.load(videoId, startAt: ref.read(startSecondAtVideoProvider));
-        ref.read(currentIndex.notifier).update((state) => state! - 1);
+        ref.read(currentIndexProvider.notifier).update((state) => state! - 1);
+
+        final context = ref.read(videoListProvider)[index - 1].key.currentContext;
+        if (context != null) {
+          Scrollable.ensureVisible(
+              context,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart
+          );
+        }
       }
     }
   }
   // 다음 영상
   void nextVideo() {
-    final index = ref.read(currentIndex);
+    final index = ref.read(currentIndexProvider);
     if (index != null && index != ref.read(videoListProvider).length - 1) {
-      final videoId = YoutubePlayer.convertUrlToId(ref.read(videoListProvider)[index! + 1].videoUrl);
+      final videoId = YoutubePlayer.convertUrlToId(ref.read(videoListProvider)[index+ 1].videoUrl);
       if (videoId != null) {
         playerController.load(videoId, startAt: ref.read(startSecondAtVideoProvider));
-        ref.read(currentIndex.notifier).update((state) => state! + 1);
+        ref.read(currentIndexProvider.notifier).update((state) => state! + 1);
+
+        final context = ref.read(videoListProvider)[index + 1].key.currentContext;
+        if (context != null) {
+          Scrollable.ensureVisible(
+              context,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd
+          );
+        }
       }
     }
   }

@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:look_around_youtube/presentation/ui/login_screen.dart';
 import 'package:look_around_youtube/presentation/ui/music_screen.dart';
 
 class NavigationScreen extends StatelessWidget {
@@ -10,15 +11,14 @@ class NavigationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 3,
+        length: 2,
         initialIndex: initialIndex,
         child: const Scaffold(
           body: SafeArea(
             child: TabBarView(
               children: [
                 MusicScreen(),
-                Text('who'),
-                Text('me')
+                LoginScreen()
               ],
             ),
           ),
@@ -26,9 +26,6 @@ class NavigationScreen extends StatelessWidget {
             tabs: [
               Tab(
                 text: 'music',
-              ),
-              Tab(
-                text: 'who',
               ),
               Tab(
                 text: 'me',

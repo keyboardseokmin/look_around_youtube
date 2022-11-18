@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../provider/providers.dart';
 import '../datasource/remote/scrape_youtube.dart';
 
-final webViewProvider = Provider<WebView>(WebView.new);
-
 class WebView {
   final Ref ref;
 

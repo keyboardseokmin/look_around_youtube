@@ -65,12 +65,15 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
         padding: const EdgeInsets.all(10),
         itemBuilder: (BuildContext context, int index) {
           return InkWell(
+            key: listOfVideos[index].key,
             onTap: () {
               ref.read(musicProvider).setYoutubePlayerController(index);
+              // 스크롤 이동
+              // ref.read(musicProvider).moveToScroll(index);
             },
             child: Container(
               decoration: BoxDecoration(
-                color: ref.watch(currentIndex) == index ?
+                color: ref.watch(currentIndexProvider) == index ?
                 AppColors.listSelected :
                 AppColors.grey,
                 borderRadius: const BorderRadius.all(Radius.circular(6))
@@ -167,7 +170,7 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
   }
 
   Widget _buildPlayPauseIcon() {
-    switch(ref.watch(playerState)) {
+    switch(ref.watch(playerStateProvider)) {
       case PlayerState.playing:
         return const Icon(Icons.pause_rounded);
       default:

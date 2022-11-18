@@ -70,7 +70,13 @@ class HeadlessWebView extends ChangeNotifier {
           if (!video[3].toString().contains(youtubeUrlPrefix)) continue;
           // 실시간 방송은 스크래핑에서 info.length 가 2라서 채널과 시간값이 0이 들어감
           if (video[1] == "" && video[2] == "") continue;
-          result.add(YoutubeVideoData(video[0], video[1], video[2], video[3]));
+          result.add(YoutubeVideoData(
+            key: GlobalKey(),
+            title: video[0],
+            channel: video[1],
+            publishedAt: video[2],
+            videoUrl: video[3]
+          ));
         }
       }
     }
