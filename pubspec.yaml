@@ -44,6 +44,8 @@ dependencies:
   flutter_riverpod: ^2.0.2
   riverpod_annotation: ^1.0.4
   lottie: ^2.0.0
+  cached_network_image: ^3.2.2
+  freezed_annotation:
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +58,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
   riverpod_generator: ^1.0.4
+  build_runner:
+  json_serializable:
+  freezed:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

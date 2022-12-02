@@ -47,16 +47,14 @@ class HeadlessWebView extends ChangeNotifier {
         final result = await scrapYoutube.parseIsLoggedIn(webViewController);
         ref.read(isLoggedInProvider.notifier).state = result? LoginState.loggedIn: LoginState.loggedOut;
         break;
-      case LoadUrlType.signIn:
-        break;
       case LoadUrlType.listOfVideo:
         final lists = await scrapYoutube.parseGetListOfVideo(webViewController);
         ref.read(videoListProvider.notifier).state = _getListOfYoutubeVideo(lists);
         break;
-      case LoadUrlType.userInfo:
-        break;
       case LoadUrlType.logOut:
         ref.read(isLoggedInProvider.notifier).state = LoginState.loggedOut;
+        break;
+      default:
         break;
     }
   }

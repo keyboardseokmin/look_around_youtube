@@ -193,17 +193,25 @@ class ScrapYoutube {
               
               setTimeout(function() {
                 var info = window.document.getElementsByClassName('google-account-header-renderer');
+                var tempPhoto1 = window.document.getElementsByClassName('account-item-icon');
+                var photoUrl = "";
+                if (tempPhoto1.length > 0) {
+                  var tempPhoto2 = tempPhoto1[0].getElementsByTagName('img');
+                  if (tempPhoto2.length > 0) {
+                    photoUrl = tempPhoto2[0].src;
+                  }
+                }
                 if (info.length > 0) {
                   var dived = info[0].getElementsByTagName('div');
                   if (dived.length > 1) {
-                    resolve([dived[0].textContent, dived[1].textContent]);
+                    resolve([dived[0].textContent, dived[1].textContent, photoUrl]);
                   } else if (dived.length > 0) {
-                    resolve([dived[0].textContent, ""]);
+                    resolve([dived[0].textContent, "", photoUrl]);
                   }
                 }
               }, 1000);
             }
-          }, 500);
+          }, 1000);
         });
         
         return await p;

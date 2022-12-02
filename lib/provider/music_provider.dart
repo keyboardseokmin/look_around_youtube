@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:look_around_youtube/provider/providers.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-import '../data/youtube_data.dart';
-
 class Music {
   // video listView scroll controller
   final scrollController = ScrollController();
@@ -32,6 +30,12 @@ class Music {
 
   void loadVideos() {
     ref.read(headlessWebViewProvider).getListOfVideo();
+  }
+
+  void getUserInfo() {
+    if (ref.read(userProvider).isEmpty()) {
+      ref.read(headlessWebViewUserProvider).getUserInfo();
+    }
   }
 
   void moveToScroll(int before, int after) {

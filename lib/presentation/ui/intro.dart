@@ -31,6 +31,10 @@ class Intro extends ConsumerWidget {
     if (!headlessWebView.headlessWebView.isRunning()) {
       headlessWebView.headlessWebView.run();
     }
+    final headlessWebViewUser = ref.read(headlessWebViewUserProvider);
+    if (!headlessWebViewUser.headlessWebView.isRunning()) {
+      headlessWebViewUser.headlessWebView.run();
+    }
     // 사용 가능할때 login 상태 체크
     ref.listen<HeadlessWebView>(headlessWebViewProvider, (previous, next) {
       if (next.readyToWork) {
