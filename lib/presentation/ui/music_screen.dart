@@ -9,8 +9,6 @@ import '../../data/youtube_data.dart';
 import '../../provider/providers.dart';
 import '../app_colors.dart';
 
-final isFloatingButtonExpandedProvider = StateProvider<bool>((ref) => false);
-
 class MusicScreen extends ConsumerStatefulWidget {
   const MusicScreen({Key? key}) : super(key: key);
 
@@ -51,116 +49,8 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
               ],
             ),
             videoList.isNotEmpty ? _buildPlayerButtons(context) : Container(),
-            Align(
-              alignment: Alignment(
-                Alignment.bottomCenter.x,
-                ref.watch(isFloatingButtonExpandedProvider) ?
-                  Alignment.bottomCenter.y :
-                  Alignment.bottomCenter.y - 0.04
-              ),
-              child: _buildBottomExpandedButton(context),
-            ),
+            const ExpandContainer(),
           ]
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomExpandedButton(BuildContext context) {
-    final isExpanded = ref.watch(isFloatingButtonExpandedProvider);
-    final screenSize = MediaQuery.of(context).size;
-    return GestureDetector(
-      onTap: () {
-        ref.read(isFloatingButtonExpandedProvider.notifier).update((state) => !state);
-      },
-      child: SizedBox(
-        width: isExpanded ? screenSize.width : 200,
-        height: isExpanded ? 150 : 44,
-        child: Container(
-          color: Colors.black87,
-          child: Row(
-            children: [
-              const SizedBox(
-                width: 10,
-              ),
-              ref.watch(userProvider).photo == "" ?
-              ClipOval(
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  color: Colors.white70,
-                ),
-              ) :
-              const SplashContainer(width: 26, height: 26, duration: 1),
-              // ClipOval(
-              //   child: CachedNetworkImage(
-              //     width: 26,
-              //     height: 26,
-              //     imageUrl: ref.read(userProvider).photo,
-              //     placeholder: (context, url) => const CircularProgressIndicator(),
-              //     errorWidget: (context, url, error) => const Icon(Icons.error),
-              //   ),
-              // ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserFloatingButton(BuildContext context) {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        ref.watch(isFloatingButtonExpandedProvider.notifier).state = true;
-      },
-      backgroundColor: Colors.black87,
-      icon: ref.watch(userProvider.notifier).state.photo == "" ?
-        Container() :
-        ClipOval(
-          child: CachedNetworkImage(
-            width: 26,
-            height: 26,
-            imageUrl: ref.read(userProvider).photo,
-            placeholder: (context, url) => const CircularProgressIndicator(),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
-          ),
-        ),
-      label: ref.watch(userProvider.notifier).state.nickname == "" ?
-        Container() :
-        Text(ref.read(userProvider).nickname),
-    );
-  }
-
-  Widget _buildUserInfoView() {
-    return GestureDetector(
-      onTap: () {
-        ref.watch(isFloatingButtonExpandedProvider.notifier).state = false;
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20)
-          ),
-          color: Colors.black87
-        ),
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ref.watch(userProvider.notifier).state.photo == "" ?
-                Container() :
-                ClipOval(
-                  child: CachedNetworkImage(
-                    width: 26,
-                    height: 26,
-                    imageUrl: ref.read(userProvider).photo,
-                    placeholder: (context, url) => const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
-                  ),
-                ),
-            )
-          ],
         ),
       ),
     );
@@ -425,63 +315,73 @@ class _DraggableFloatingActionButtonState extends State<DraggableFloatingActionB
   }
 }
 
-class SplashContainer extends StatefulWidget {
-  const SplashContainer({
-    Key? key,
-    required this.width,
-    required this.height,
-    required this.duration,
-  }) : super(key: key);
-
-  final double width;
-  final double height;
-  final int duration;
+class ExpandContainer extends ConsumerStatefulWidget {
+  const ExpandContainer({Key? key}) : super(key: key);
 
   @override
-  State<SplashContainer> createState() => _SplashContainerState();
+  ExpandContainerState createState() => ExpandContainerState();
 }
 
-class _SplashContainerState extends State<SplashContainer> {
-  var scale = 1.0;
+class ExpandContainerState extends ConsumerState<ExpandContainer> {
+  var isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        scale = scale == 1.0 ? 0.5 : 1.0;
-      });
-    });
-
-    return Transform.scale(
-      scale: scale,
-      child: SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: Container(
-          color: Colors.white70,
+    final screenSize = MediaQuery.of(context).size;
+    return AnimatedAlign(
+      alignment: Alignment(
+        Alignment.bottomCenter.x,
+        isExpanded ? Alignment.bottomCenter.y : Alignment.bottomCenter.y - 0.04
+      ),
+      duration: const Duration(milliseconds: 100),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            isExpanded = !isExpanded;
+          });
+        },
+        child: AnimatedContainer(
+          width: isExpanded ? screenSize.width : 200,
+          height: isExpanded ? 140 : 50,
+          duration: const Duration(milliseconds: 100),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: isExpanded ?
+            const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)) :
+            const BorderRadius.all(Radius.circular(25))
+          ),
+          curve: Curves.fastOutSlowIn,
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 10,
+              ),
+              ref.watch(userProvider).photo == "" ?
+              ClipOval(
+                child: Container(
+                  width: 26,
+                  height: 26,
+                  color: Colors.white70,
+                ),
+              ) :
+              ClipOval(
+                child: CachedNetworkImage(
+                  width: 26,
+                  height: 26,
+                  imageUrl: ref.read(userProvider).photo,
+                  placeholder: (context, url) => const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-// class SplashContainer extends StatelessWidget {
-//   final double width;
-//   final double height;
-//   final int duration;
-//
-//   const SplashContainer({
-//     Key? key,
-//     required this.width,
-//     required this.height,
-//     required this.duration
-//   }) : super(key: key);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return SizedBox(
-//       width: width,
-//       height: height,
-//     );
-//   }
-// }
