@@ -8,6 +8,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../data/youtube_data.dart';
 import '../../provider/providers.dart';
 import '../app_colors.dart';
+import 'option_screen.dart';
 
 class MusicScreen extends ConsumerStatefulWidget {
   const MusicScreen({Key? key}) : super(key: key);
@@ -315,6 +316,7 @@ class _DraggableFloatingActionButtonState extends State<DraggableFloatingActionB
   }
 }
 
+// 하단 플로팅 버튼
 class ExpandContainer extends ConsumerStatefulWidget {
   const ExpandContainer({Key? key}) : super(key: key);
 
@@ -338,7 +340,7 @@ class ExpandContainerState extends ConsumerState<ExpandContainer> {
         Alignment.bottomCenter.x,
         isExpanded ? Alignment.bottomCenter.y : Alignment.bottomCenter.y - 0.04
       ),
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 200),
       child: GestureDetector(
         onTap: () {
           setState(() {
@@ -347,16 +349,26 @@ class ExpandContainerState extends ConsumerState<ExpandContainer> {
         },
         child: AnimatedContainer(
           width: isExpanded ? screenSize.width : 200,
-          height: isExpanded ? 140 : 50,
-          duration: const Duration(milliseconds: 100),
+          height: isExpanded ? screenSize.height : 50,
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: Colors.black87,
+            color: isExpanded ? Colors.white : Colors.black87,
             borderRadius: isExpanded ?
             const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)) :
-            const BorderRadius.all(Radius.circular(25))
+            const BorderRadius.all(Radius.circular(25)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.7),
+                spreadRadius: 0,
+                blurRadius: 5.0,
+                offset: const Offset(0, 4),
+              ),
+            ]
           ),
           curve: Curves.fastOutSlowIn,
-          child: Row(
+          child: isExpanded ?
+          const OptionScreen() :
+          Row(
             children: [
               const SizedBox(
                 width: 10,
