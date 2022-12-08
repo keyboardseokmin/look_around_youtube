@@ -9,6 +9,7 @@ class AppColors {
   static const Color _greenPrimaryColor = Color(0xFF158443);
   static const Color white = Color(0xFFFFFFFF);
   static const Color textGray = Color(0xFF757575);
+  static const Color textBlack = Color(0xFF252525);
   static const Color listSelected = Color(0x11000000);
 }
 

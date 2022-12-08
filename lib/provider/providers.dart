@@ -24,6 +24,10 @@ final currentIndexProvider = StateProvider<int?>((ref) => null);
 final videoListProvider = StateProvider<List<YoutubeVideoData>>((ref) => <YoutubeVideoData>[]);
 // 유저 정보
 final userProvider = StateProvider<UserData>((ref) => UserData(nickname: '', id: '', photo: ''));
+// 뒤로가기 제어
+final backKeyPressed = StateProvider<bool>((ref) => false);
+// 바텀버튼 확장
+final isOptionShowed = StateProvider<bool>((ref) => false);
 
 class UserData {
   late final String nickname;

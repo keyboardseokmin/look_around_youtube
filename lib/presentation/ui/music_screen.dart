@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../data/youtube_data.dart';
 import '../../provider/providers.dart';
 import '../app_colors.dart';
+import '../app_fonts.dart';
 import 'option_screen.dart';
 
 class MusicScreen extends ConsumerStatefulWidget {
@@ -37,24 +40,49 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
   Widget build(BuildContext context) {
     final videoList = ref.watch(videoListProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        key: _parentKey,
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                videoList.isNotEmpty ? _buildYoutubePlayer(ref) : Container(),
-                videoList.isEmpty ? _buildVideoEmptyMessage() :  Container(),
-                videoList.isNotEmpty ? _buildVideoList(videoList) : Container(),
-              ],
-            ),
-            videoList.isNotEmpty ? _buildPlayerButtons(context) : Container(),
-            const ExpandContainer(),
-          ]
+    return WillPopScope(
+      onWillPop: () {
+        return _onBackKey();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          key: _parentKey,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  videoList.isNotEmpty ? _buildYoutubePlayer(ref) : Container(),
+                  videoList.isEmpty ? _buildVideoEmptyMessage() :  Container(),
+                  videoList.isNotEmpty ? _buildVideoList(videoList) : Container(),
+                ],
+              ),
+              videoList.isNotEmpty ? _buildPlayerButtons(context) : Container(),
+              const ExpandContainer(),
+            ]
+          ),
         ),
       ),
     );
+  }
+
+  Timer? timerBackToBackKey;
+  Future<bool> _onBackKey() async {
+    if (ref.read(backKeyPressed)) {
+      return true;
+    }
+
+    ref.read(backKeyPressed.notifier).update((state) => true);
+    timerBackToBackKey?.cancel();
+    timerBackToBackKey = Timer(const Duration(seconds: 4), () {
+      ref.read(backKeyPressed.notifier).update((state) => false);
+    });
+    
+    Fluttertoast.showToast(
+      msg: "back".tr(),
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM
+    );
+    return false;
   }
 
   Widget _buildYoutubePlayer(WidgetRef ref) {
@@ -88,12 +116,13 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
               // ref.read(musicProvider).moveToScroll(index);
             },
             child: Container(
-              decoration: BoxDecoration(
-                color: ref.watch(currentIndexProvider) == index ?
-                AppColors.listSelected :
-                AppColors.grey,
-                borderRadius: const BorderRadius.all(Radius.circular(6))
-              ),
+              // 선택하면 백그라운드가 그레이로 바뀜
+              // decoration: BoxDecoration(
+              //   color: ref.watch(currentIndexProvider) == index ?
+              //   AppColors.listSelected :
+              //   AppColors.grey,
+              //   borderRadius: const BorderRadius.all(Radius.circular(6))
+              // ),
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,9 +133,19 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
                         listOfVideos[index].title,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.left,
+                        style: AppFonts.listViewMain,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 10, right: 10),
+                      child: Container(
+                        width: calcTextSize(listOfVideos[index].title, AppFonts.listViewMain).width,
+                        height: 3,
+                        color: ref.watch(currentIndexProvider) == index ? Colors.black87 : AppColors.grey,
+                      )
+                    ),
+                    const SizedBox(height: 3),
                     Padding(
                       padding: const EdgeInsets.only(left: 10, right: 10),
                       child: Row(
@@ -116,13 +155,13 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
                             listOfVideos[index].channel,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.left,
-                            style: const TextStyle(color: AppColors.textGray, fontSize: 13),
+                            style: AppFonts.listViewSub,
                           ),
                           Text(
                             listOfVideos[index].publishedAt,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.right,
-                            style: const TextStyle(color: AppColors.textGray, fontSize: 13),
+                            style: AppFonts.listViewSub,
                           ),
                         ],
                       ),
@@ -204,6 +243,15 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
       default:
         return const Icon(Icons.play_arrow_rounded);
     }
+  }
+
+  Size calcTextSize(String text, TextStyle style) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: ui.TextDirection.ltr,
+      textScaleFactor: WidgetsBinding.instance.window.textScaleFactor,
+    )..layout();
+    return textPainter.size;
   }
 }
 
