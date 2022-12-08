@@ -67,6 +67,11 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
 
   Timer? timerBackToBackKey;
   Future<bool> _onBackKey() async {
+    if (ref.read(isOptionShowed)) {
+      ref.read(isOptionShowed.notifier).state = false;
+      return false;
+    }
+
     if (ref.read(backKeyPressed)) {
       return true;
     }
@@ -365,43 +370,32 @@ class _DraggableFloatingActionButtonState extends State<DraggableFloatingActionB
 }
 
 // 하단 플로팅 버튼
-class ExpandContainer extends ConsumerStatefulWidget {
-  const ExpandContainer({Key? key}) : super(key: key);
+class ExpandContainer extends ConsumerWidget {
+  const ExpandContainer({
+    Key? key,
+  }) : super(key: key);
 
   @override
-  ExpandContainerState createState() => ExpandContainerState();
-}
-
-class ExpandContainerState extends ConsumerState<ExpandContainer> {
-  var isExpanded = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final screenSize = MediaQuery.of(context).size;
+    final padding = MediaQuery.of(context).padding;
     return AnimatedAlign(
       alignment: Alignment(
         Alignment.bottomCenter.x,
-        isExpanded ? Alignment.bottomCenter.y : Alignment.bottomCenter.y - 0.04
+        ref.watch(isOptionShowed) ? Alignment.bottomCenter.y : Alignment.bottomCenter.y - 0.04
       ),
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 100),
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            isExpanded = !isExpanded;
-          });
+          ref.read(isOptionShowed.notifier).update((state) => !state);
         },
         child: AnimatedContainer(
-          width: isExpanded ? screenSize.width : 200,
-          height: isExpanded ? screenSize.height : 50,
+          width: ref.watch(isOptionShowed) ? screenSize.width : 200,
+          height: ref.watch(isOptionShowed) ? screenSize.height - padding.top - padding.bottom: 50,
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: isExpanded ? Colors.white : Colors.black87,
-            borderRadius: isExpanded ?
+            color: ref.watch(isOptionShowed) ? Colors.white : Colors.black87,
+            borderRadius: ref.watch(isOptionShowed) ?
             const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)) :
             const BorderRadius.all(Radius.circular(25)),
             boxShadow: [
@@ -414,7 +408,7 @@ class ExpandContainerState extends ConsumerState<ExpandContainer> {
             ]
           ),
           curve: Curves.fastOutSlowIn,
-          child: isExpanded ?
+          child: ref.watch(isOptionShowed) ?
           const OptionScreen() :
           Row(
             children: [
