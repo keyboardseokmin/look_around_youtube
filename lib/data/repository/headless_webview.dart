@@ -49,7 +49,16 @@ class HeadlessWebView extends ChangeNotifier {
         break;
       case LoadUrlType.listOfVideo:
         final lists = await scrapYoutube.parseGetListOfVideo(webViewController);
+
+        // 페이지 높이 초기화
+        final scrollHeight = await scrapYoutube.getScrollHeight(webViewController);
+        ref.read(paginationScrollHeight.notifier).update((state) => scrollHeight);
+
         ref.read(videoListProvider.notifier).state = _getListOfYoutubeVideo(lists);
+        // 페이지가 더 있다는 뜻
+        if (lists.length > 15 ) {
+          await startPagination();
+        }
         break;
       case LoadUrlType.logOut:
         ref.read(isLoggedInProvider.notifier).state = LoginState.loggedOut;
@@ -81,6 +90,19 @@ class HeadlessWebView extends ChangeNotifier {
     return result;
   }
 
+  Future<void> startPagination() async {
+    final scrollHeight = await ref.read(scrapYoutubeProvider).moveToScrollBottom(webViewController);
+    final lists = await ref.read(scrapYoutubeProvider).loadPagination(webViewController);
+
+    // 페이지 높이 초기화
+    ref.read(paginationScrollHeight.notifier).update((state) => scrollHeight);
+    ref.read(videoListProvider.notifier).state = _getListOfYoutubeVideo(lists);
+
+    // 페이지네이션 끝
+    ref.read(doingPagination.notifier).update((state) => false);
+    ref.read(showBottomIndicator.notifier).update((state) => false);
+  }
+
   void isLoggedIn() {
     ref.read(scrapYoutubeProvider).isLoggedIn(webViewController);
   }
@@ -91,5 +113,9 @@ class HeadlessWebView extends ChangeNotifier {
 
   void logOut() {
     ref.read(scrapYoutubeProvider).logOut(webViewController);
+  }
+
+  void moveToScrollBottom() async {
+    await ref.read(scrapYoutubeProvider).moveToScrollBottom(webViewController);
   }
 }

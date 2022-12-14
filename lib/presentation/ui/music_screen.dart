@@ -11,6 +11,7 @@ import '../../data/youtube_data.dart';
 import '../../provider/providers.dart';
 import '../app_colors.dart';
 import '../app_fonts.dart';
+import 'draggable_floating_button.dart';
 import 'option_screen.dart';
 
 class MusicScreen extends ConsumerStatefulWidget {
@@ -38,7 +39,7 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final videoList = ref.watch(videoListProvider);
+    final videoList = ref.watch(filteredVideoList);
 
     return WillPopScope(
       onWillPop: () {
@@ -58,6 +59,7 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
               ),
               videoList.isNotEmpty ? _buildPlayerButtons(context) : Container(),
               const ExpandContainer(),
+              _buildBottomIndicator(ref),
             ]
           ),
         ),
@@ -183,7 +185,7 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
   }
 
   Widget _buildPlayerButtons(BuildContext context) {
-    return DraggableFloatingActionButton(
+    return DraggableFloatingButton(
       initialOffset: _getInitOffset(context),
       onPressed: () {  },
       parentKey: _parentKey,
@@ -258,111 +260,24 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
     )..layout();
     return textPainter.size;
   }
-}
 
-class DraggableFloatingActionButton extends StatefulWidget {
-
-  final Widget child;
-  final Offset initialOffset;
-  final VoidCallback onPressed;
-  final GlobalKey parentKey;
-
-  const DraggableFloatingActionButton({
-    super.key,
-    required this.child,
-    required this.initialOffset,
-    required this.onPressed,
-    required this.parentKey
-  });
-
-  @override
-  State<StatefulWidget> createState() => _DraggableFloatingActionButtonState();
-}
-
-class _DraggableFloatingActionButtonState extends State<DraggableFloatingActionButton> {
-
-  final GlobalKey _key = GlobalKey();
-
-  bool _isDragging = false;
-  late Offset _offset;
-  late Offset _minOffset;
-  late Offset _maxOffset;
-
-  @override
-  void initState() {
-    super.initState();
-    _offset = widget.initialOffset;
-
-    WidgetsBinding.instance.addPostFrameCallback(_setBoundary);
-  }
-
-  void _setBoundary(_) {
-    final RenderBox parentRenderBox = widget.parentKey.currentContext?.findRenderObject() as RenderBox;
-    final RenderBox renderBox = _key.currentContext?.findRenderObject() as RenderBox;
-
-    try {
-      final Size parentSize = parentRenderBox.size;
-      final Size size = renderBox.size;
-
-      setState(() {
-        _minOffset = const Offset(0, 0);
-        _maxOffset = Offset(
-            parentSize.width - size.width,
-            parentSize.height - size.height
-        );
-      });
-    } catch (e) {
-      debugPrint('catch: $e');
-    }
-  }
-
-  void _updatePosition(PointerMoveEvent pointerMoveEvent) {
-    double newOffsetX = _offset.dx + pointerMoveEvent.delta.dx;
-    double newOffsetY = _offset.dy + pointerMoveEvent.delta.dy;
-
-    if (newOffsetX < _minOffset.dx) {
-      newOffsetX = _minOffset.dx;
-    } else if (newOffsetX > _maxOffset.dx) {
-      newOffsetX = _maxOffset.dx;
-    }
-
-    if (newOffsetY < _minOffset.dy) {
-      newOffsetY = _minOffset.dy;
-    } else if (newOffsetY > _maxOffset.dy) {
-      newOffsetY = _maxOffset.dy;
-    }
-
-    setState(() {
-      _offset = Offset(newOffsetX, newOffsetY);
-      debugPrint(_offset.toString());
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: _offset.dx,
-      top: _offset.dy,
-      child: Listener(
-        onPointerMove: (PointerMoveEvent pointerMoveEvent) {
-          _updatePosition(pointerMoveEvent);
-
-          setState(() {
-            _isDragging = true;
-          });
-        },
-        onPointerUp: (PointerUpEvent pointerUpEvent) {
-          if (_isDragging) {
-            setState(() {
-              _isDragging = false;
-            });
-          } else {
-            widget.onPressed();
-          }
-        },
-        child: Container(
-          key: _key,
-          child: widget.child,
+  Widget _buildBottomIndicator(WidgetRef ref) {
+    return AnimatedOpacity(
+      opacity: ref.watch(showBottomIndicator) ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 200),
+      child: AnimatedAlign(
+        alignment: Alignment(
+          Alignment.bottomCenter.x,
+          ref.watch(showBottomIndicator) ? Alignment.bottomCenter.y - 0.01 : Alignment.bottomCenter.y + 0.1
+        ),
+        duration: const Duration(milliseconds: 200),
+        child: const SizedBox(
+          width: 26,
+          height: 26,
+          child: CircularProgressIndicator(
+            color: Colors.blueAccent,
+            strokeWidth: 3.0,
+          ),
         ),
       ),
     );
@@ -382,15 +297,17 @@ class ExpandContainer extends ConsumerWidget {
     return AnimatedAlign(
       alignment: Alignment(
         Alignment.bottomCenter.x,
-        ref.watch(isOptionShowed) ? Alignment.bottomCenter.y : Alignment.bottomCenter.y - 0.04
+        ref.watch(isOptionShowed) ? Alignment.bottomCenter.y : Alignment.bottomCenter.y - 0.13
       ),
       duration: const Duration(milliseconds: 100),
       child: GestureDetector(
         onTap: () {
-          ref.read(isOptionShowed.notifier).update((state) => !state);
+          if (!ref.read(isOptionShowed)) {
+            ref.read(isOptionShowed.notifier).update((state) => !state);
+          }
         },
         child: AnimatedContainer(
-          width: ref.watch(isOptionShowed) ? screenSize.width : 200,
+          width: ref.watch(isOptionShowed) ? screenSize.width : 140,
           height: ref.watch(isOptionShowed) ? screenSize.height - padding.top - padding.bottom: 50,
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
@@ -432,6 +349,21 @@ class ExpandContainer extends ConsumerWidget {
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               ),
+              const SizedBox(
+                width: 7,
+              ),
+              Expanded(
+                child: Text(
+                  ref.watch(userProvider).nickname,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.floatingName,
+                ),
+              ),
+              const SizedBox(
+                width: 18,
+              )
             ],
           ),
         ),

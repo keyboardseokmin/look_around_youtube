@@ -13,16 +13,21 @@ class Intro extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // hive 초기화, await 라 main 에서 시도
+    // ref.read(subscribeDataSource).init();
+    // subscribe list 불러오기
+    Future(() => ref.read(subscribeDataSource).read());
+
     // 화면 이동 listen
     ref.listen(isLoggedInProvider, (previous, next) {
       switch (next) {
         case LoginState.unknown:
           break;
         case LoginState.loggedIn:
-          _moveToBottomTabScreen(context, 0);
+          _moveToNavigationScreen(context);
           break;
         case LoginState.loggedOut:
-          _moveToBottomTabScreen(context, 1);
+          _moveToNavigationScreen(context);
           break;
       }
     });
@@ -63,13 +68,13 @@ class Intro extends ConsumerWidget {
     );
   }
 
-  void _moveToBottomTabScreen(BuildContext context, int initialIndex) {
+  void _moveToNavigationScreen(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacement(
         context,
         PageTransition(
             type: PageTransitionType.fade,
-            child: NavigationScreen(initialIndex: initialIndex)
+            child: const NavigationScreen()
         )
       );
     });

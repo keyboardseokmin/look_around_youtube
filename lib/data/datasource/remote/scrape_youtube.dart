@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final scrapYoutubeProvider = Provider((ref) => ScrapYoutube());
 
-enum LoadUrlType { isLogin, signIn, logOut, listOfVideo, userInfo }
+enum LoadUrlType { isLogin, signIn, logOut, listOfVideo, userInfo, subscribeList }
 
 class ScrapYoutube {
   final Map<String, LoadUrlType> _loadUrlType = {};
@@ -118,7 +118,7 @@ class ScrapYoutube {
             if (buttons.length > 0) {
               buttons[0].click();
             }
-          }, 200);
+          }, 500);
         }
       """
     );
@@ -130,13 +130,95 @@ class ScrapYoutube {
     wrapperLoadUrl(controller, url, LoadUrlType.logOut);
   }
 
+  // 스크롤 높이 반환
+  Future<int> getScrollHeight(InAppWebViewController controller) async {
+    final result = await controller.callAsyncJavaScript(functionBody:
+    """
+      // var element = window.document.getElementById('app');
+      // return element.scrollHeight;
+      return document.body.scrollHeight;
+    """
+    );
+
+    return result?.value;
+  }
+
+  // 스크롤 바텀으로
+  Future<int> moveToScrollBottom(InAppWebViewController controller) async {
+    final result = await controller.callAsyncJavaScript(functionBody:
+    """
+      window.scrollTo(0, document.body.scrollHeight);
+
+      // var p = new Promise(function(resolve, reject) {
+      //   setTimeout(function() {
+      //     var elements = window.document.getElementsByClassName('item');
+      //     resolve(elements.length);
+      //   }, 5000);
+      // });
+      
+      var p = new Promise(function(resolve, reject) {
+        setTimeout(function() {
+          resolve(document.body.scrollHeight);
+        }, 5000);
+      });
+      
+      return await p;
+    """
+    );
+
+    return result?.value;
+  }
+
+  // pagination load
+  Future<List<dynamic>> loadPagination(InAppWebViewController controller) async {
+    final result = await controller.callAsyncJavaScript(functionBody:
+    """
+      var p = new Promise(function(resolve, reject) {
+        setTimeout(function() {
+          var elements = window.document.getElementsByClassName('item');
+          var metadata = [];
+          
+          for (i=0; i < elements.length; i++) {
+            var elementTitle = elements[i].getElementsByClassName('media-item-headline');
+            var title = "";
+            if (elementTitle.length > 0) {
+              title = elementTitle[0].textContent;
+            }
+            
+            var info = elements[i].getElementsByClassName('ytm-badge-and-byline-item-byline');
+            var channel = "";
+            var createAt = "";
+            if (info.length > 2) {
+              channel = info[0].textContent;
+              createAt = info[2].textContent;
+            }
+            
+            var elementLink = elements[i].getElementsByClassName('media-item-thumbnail-container');
+            var link = "";
+            if (elementLink.length > 0) {
+              link = elementLink[0].href;
+            }
+            
+            metadata.push([title, channel, createAt, link]);
+            resolve(metadata);
+          }
+        }, 1000);
+      });
+      
+      return await p;
+    """
+    );
+
+    return result?.value;
+  }
+
   // 비디오 리스트 가져오기
   void getListOfVideo(InAppWebViewController controller) {
     var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/subscriptions/'));
     wrapperLoadUrl(controller, url, LoadUrlType.listOfVideo);
   }
   Future<List<dynamic>> parseGetListOfVideo(InAppWebViewController controller) async {
-    sleep(const Duration(seconds: 1));
+    sleep(const Duration(seconds: 2));
     final result = await controller.callAsyncJavaScript(functionBody:
       """
         var elements = window.document.getElementsByClassName('item');
@@ -216,6 +298,33 @@ class ScrapYoutube {
         
         return await p;
       }
+      """
+    );
+
+    return result?.value;
+  }
+
+  // 구독 목록 가져오기
+  void getSubscribeList(InAppWebViewController controller) {
+    var url = URLRequest(url: Uri.parse('https://m.youtube.com/feed/channels/'));
+    wrapperLoadUrl(controller, url, LoadUrlType.subscribeList);
+  }
+  Future<List<dynamic>> parseGetSubscribeList(InAppWebViewController controller) async {
+    final result = await controller.callAsyncJavaScript(functionBody:
+      """
+      var p = new Promise(function(resolve, reject) {
+        setTimeout(function() {
+          var titles = window.document.getElementsByClassName('channel-list-item-title');
+          var titlesStr = [];
+          for (i=0; i < titles.length; i++) {
+            titlesStr.push(titles[i].textContent);
+          }
+          
+          resolve(titlesStr);
+        }, 1000);
+      });
+      
+      return await p;
       """
     );
 

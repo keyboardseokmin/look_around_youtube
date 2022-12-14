@@ -26,6 +26,22 @@ class Music {
       ref.read(playerStateProvider.notifier).state = playerController.value.playerState;
       debugPrint(ref.read(playerStateProvider.notifier).state.toString());
     });
+    scrollController.addListener(() {
+      double maxScroll = scrollController.position.maxScrollExtent;
+      double currentScroll = scrollController.position.pixels;
+      double delta = 100.0; // or something else..
+      if ( maxScroll - currentScroll <= delta) {
+        if (!ref.read(isEndOfPage)) {
+          ref.read(showBottomIndicator.notifier).update((state) => true);
+          if (!ref.read(doingPagination)) {
+            ref.read(doingPagination.notifier).update((state) => true);
+            ref.read(headlessWebViewProvider).startPagination();
+          }
+        }
+      } else {
+        ref.read(showBottomIndicator.notifier).update((state) => false);
+      }
+    });
   }
 
   void loadVideos() {
@@ -39,7 +55,7 @@ class Music {
   }
 
   void moveToScroll(int before, int after) {
-    final divideCount = ref.read(videoListProvider).length - 2;
+    final divideCount = ref.read(filteredVideoList).length - 2;
     final positionRatio = scrollController.position.maxScrollExtent / divideCount;
     final destPosition = positionRatio;
     scrollController.animateTo(
@@ -51,7 +67,7 @@ class Music {
 
   // video list 에 있는 영상 선택
   void setYoutubePlayerController(int index) {
-    final videoList = ref.read(videoListProvider);
+    final videoList = ref.read(filteredVideoList);
     if (index < videoList.length && index >= 0) {
       // nowController?.pause();
       final videoId = YoutubePlayer.convertUrlToId(videoList[index].videoUrl);
@@ -86,12 +102,12 @@ class Music {
   void previousVideo() {
     final index = ref.read(currentIndexProvider);
     if (index != null && index != 0) {
-      final videoId = YoutubePlayer.convertUrlToId(ref.read(videoListProvider)[index - 1].videoUrl);
+      final videoId = YoutubePlayer.convertUrlToId(ref.read(filteredVideoList)[index - 1].videoUrl);
       if (videoId != null) {
         playerController.load(videoId, startAt: ref.read(startSecondAtVideoProvider));
         ref.read(currentIndexProvider.notifier).update((state) => state! - 1);
 
-        final context = ref.read(videoListProvider)[index - 1].key.currentContext;
+        final context = ref.read(filteredVideoList)[index - 1].key.currentContext;
         if (context != null) {
           Scrollable.ensureVisible(
               context,
@@ -106,13 +122,13 @@ class Music {
   // 다음 영상
   void nextVideo() {
     final index = ref.read(currentIndexProvider);
-    if (index != null && index != ref.read(videoListProvider).length - 1) {
-      final videoId = YoutubePlayer.convertUrlToId(ref.read(videoListProvider)[index+ 1].videoUrl);
+    if (index != null && index != ref.read(filteredVideoList).length - 1) {
+      final videoId = YoutubePlayer.convertUrlToId(ref.read(filteredVideoList)[index+ 1].videoUrl);
       if (videoId != null) {
         playerController.load(videoId, startAt: ref.read(startSecondAtVideoProvider));
         ref.read(currentIndexProvider.notifier).update((state) => state! + 1);
 
-        final context = ref.read(videoListProvider)[index + 1].key.currentContext;
+        final context = ref.read(filteredVideoList)[index + 1].key.currentContext;
         if (context != null) {
           Scrollable.ensureVisible(
               context,

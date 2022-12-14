@@ -2,13 +2,21 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:look_around_youtube/data/datasource/local/subscribes_data_source.dart';
 import 'package:look_around_youtube/presentation/app_colors.dart';
 import 'package:look_around_youtube/presentation/ui/intro.dart';
+
+import 'data/datasource/local/subscribe_data.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  // Hive 초기화
+  await Hive.initFlutter();
+  Hive.registerAdapter(SubscribeDataAdapter());
+  await SubscribeDataSource.init();
   runApp(
     // 언어설정
     EasyLocalization(

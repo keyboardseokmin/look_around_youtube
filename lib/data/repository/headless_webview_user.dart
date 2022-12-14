@@ -38,6 +38,12 @@ class HeadlessWebViewUser {
         final info = await scrapYoutube.parseGetUserInfo(webViewController);
         ref.read(userProvider.notifier).state = UserData(nickname: info[0], id: info[1], photo: info[2]);
         break;
+      case LoadUrlType.subscribeList:
+        final list = await scrapYoutube.parseGetSubscribeList(webViewController);
+        if (list.length > 1) {
+          ref.read(subscribeDataSource).putAndUpdate(list.cast<String>());
+        }
+        break;
       default:
         break;
     }
@@ -45,5 +51,9 @@ class HeadlessWebViewUser {
 
   void getUserInfo() {
     ref.read(scrapYoutubeProvider).getUserInfo(webViewController);
+  }
+
+  void getSubscribeList() {
+    ref.read(scrapYoutubeProvider).getSubscribeList(webViewController);
   }
 }
