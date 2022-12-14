@@ -264,13 +264,13 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
   Widget _buildBottomIndicator(WidgetRef ref) {
     return AnimatedOpacity(
       opacity: ref.watch(showBottomIndicator) ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 150),
       child: AnimatedAlign(
         alignment: Alignment(
           Alignment.bottomCenter.x,
           ref.watch(showBottomIndicator) ? Alignment.bottomCenter.y - 0.01 : Alignment.bottomCenter.y + 0.1
         ),
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
         child: const SizedBox(
           width: 26,
           height: 26,
