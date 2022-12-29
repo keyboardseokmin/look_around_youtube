@@ -91,7 +91,7 @@ class ScrapYoutube {
             // video 가 있으면 로그인 상태
             resolve(true);
           }
-        }, 1000);
+        }, 1500);
       });
       
       return await p;
@@ -118,7 +118,7 @@ class ScrapYoutube {
             if (buttons.length > 0) {
               buttons[0].click();
             }
-          }, 500);
+          }, 1000);
         }
       """
     );
@@ -202,7 +202,7 @@ class ScrapYoutube {
             metadata.push([title, channel, createAt, link]);
             resolve(metadata);
           }
-        }, 1000);
+        }, 1500);
       });
       
       return await p;
@@ -291,9 +291,9 @@ class ScrapYoutube {
                     resolve([dived[0].textContent, "", photoUrl]);
                   }
                 }
-              }, 1000);
+              }, 1500);
             }
-          }, 1000);
+          }, 1500);
         });
         
         return await p;
@@ -321,7 +321,7 @@ class ScrapYoutube {
           }
           
           resolve(titlesStr);
-        }, 1000);
+        }, 1500);
       });
       
       return await p;
