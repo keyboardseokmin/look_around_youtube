@@ -108,77 +108,79 @@ class MusicScreenState extends ConsumerState<MusicScreen> {
 
   Widget _buildVideoList(List<YoutubeVideoData> listOfVideos) {
     return Expanded(
-      child: ListView.separated(
-        controller: ref.read(musicProvider).scrollController,
-        scrollDirection: Axis.vertical,
-        shrinkWrap: true,
-        itemCount: listOfVideos.length,
-        padding: const EdgeInsets.all(10),
-        itemBuilder: (BuildContext context, int index) {
-          return InkWell(
-            key: listOfVideos[index].key,
-            onTap: () {
-              ref.read(musicProvider).setYoutubePlayerController(index);
-              // 스크롤 이동
-              // ref.read(musicProvider).moveToScroll(index);
-            },
-            child: Container(
-              // 선택하면 백그라운드가 그레이로 바뀜
-              // decoration: BoxDecoration(
-              //   color: ref.watch(currentIndexProvider) == index ?
-              //   AppColors.listSelected :
-              //   AppColors.grey,
-              //   borderRadius: const BorderRadius.all(Radius.circular(6))
-              // ),
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      child: Text(
-                        listOfVideos[index].title,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.left,
-                        style: AppFonts.listViewMain,
+      child: Scrollbar(
+        child: ListView.separated(
+          controller: ref.read(musicProvider).scrollController,
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: listOfVideos.length,
+          padding: const EdgeInsets.all(10),
+          itemBuilder: (BuildContext context, int index) {
+            return InkWell(
+              key: listOfVideos[index].key,
+              onTap: () {
+                ref.read(musicProvider).setYoutubePlayerController(index);
+                // 스크롤 이동
+                // ref.read(musicProvider).moveToScroll(index);
+              },
+              child: Container(
+                // 선택하면 백그라운드가 그레이로 바뀜
+                // decoration: BoxDecoration(
+                //   color: ref.watch(currentIndexProvider) == index ?
+                //   AppColors.listSelected :
+                //   AppColors.grey,
+                //   borderRadius: const BorderRadius.all(Radius.circular(6))
+                // ),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Text(
+                          listOfVideos[index].title,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.left,
+                          style: AppFonts.listViewMain,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 1),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      child: Container(
-                        width: calcTextSize(listOfVideos[index].title, AppFonts.listViewMain).width,
-                        height: 3,
-                        color: ref.watch(currentIndexProvider) == index ? Colors.black87 : AppColors.grey,
+                      const SizedBox(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Container(
+                          width: calcTextSize(listOfVideos[index].title, AppFonts.listViewMain).width,
+                          height: 3,
+                          color: ref.watch(currentIndexProvider) == index ? Colors.black87 : AppColors.grey,
+                        )
+                      ),
+                      const SizedBox(height: 3),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              listOfVideos[index].channel,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.left,
+                              style: AppFonts.listViewSub,
+                            ),
+                            Text(
+                              listOfVideos[index].publishedAt,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: AppFonts.listViewSub,
+                            ),
+                          ],
+                        ),
                       )
-                    ),
-                    const SizedBox(height: 3),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            listOfVideos[index].channel,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.left,
-                            style: AppFonts.listViewSub,
-                          ),
-                          Text(
-                            listOfVideos[index].publishedAt,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.right,
-                            style: AppFonts.listViewSub,
-                          ),
-                        ],
-                      ),
-                    )
-                  ]),
-            ),
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) => const Divider(
-            color: Colors.grey
+                    ]),
+              ),
+            );
+          },
+          separatorBuilder: (BuildContext context, int index) => const Divider(
+              color: Colors.grey
+          ),
         ),
       )
     );

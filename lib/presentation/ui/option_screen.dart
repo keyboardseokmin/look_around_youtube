@@ -132,34 +132,36 @@ class OptionScreen extends ConsumerWidget {
     return Expanded(
       child: Material(
         color: Colors.transparent,
-        child: ListView.builder(
-          scrollDirection: Axis.vertical,
-          padding: const EdgeInsets.all(20),
-          itemCount: list.length,
-          itemBuilder: (BuildContext context, int index) {
-            return InkWell(
-              key: list[index].key,
-              onTap: () {
-                ref.read(subscribeDataSource).update(index, !list[index].check);
-              },
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  list[index].check ?
-                  Text(
-                    list[index].name,
-                    style: AppFonts.myInfoChannelChecked,
-                  ) :
-                  Text(
-                    list[index].name,
-                    style: AppFonts.myInfoChannel,
-                  )
-                  ,
-                  const SizedBox(height: 12)
-                ]
-              ),
-            );
-          }
+        child: Scrollbar(
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            padding: const EdgeInsets.all(20),
+            itemCount: list.length,
+            itemBuilder: (BuildContext context, int index) {
+              return InkWell(
+                key: list[index].key,
+                onTap: () {
+                  ref.read(subscribeDataSource).update(index, !list[index].check);
+                },
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    list[index].check ?
+                    Text(
+                      list[index].name,
+                      style: AppFonts.myInfoChannelChecked,
+                    ) :
+                    Text(
+                      list[index].name,
+                      style: AppFonts.myInfoChannel,
+                    )
+                    ,
+                    const SizedBox(height: 12)
+                  ]
+                ),
+              );
+            }
+          ),
         ),
       )
     );
