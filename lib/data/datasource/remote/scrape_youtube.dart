@@ -8,13 +8,13 @@ enum LoadUrlType { isLogin, signIn, logOut, listOfVideo, userInfo, subscribeList
 
 class ScrapYoutube {
   final Map<String, LoadUrlType> _loadUrlType = {};
-  final loggedOutUrl = 'https://m.youtube.com/?noapp=1/';
+  final _loggedOutUrl = 'https://m.youtube.com/?noapp=1/';
 
   // loadUrl 시 어떤 타입의 call 인지 저장
   void wrapperLoadUrl(InAppWebViewController controller, URLRequest urlRequest, LoadUrlType type) {
     // logout 시 google account 페이지로 접속
     if (type == LoadUrlType.logOut) {
-      _loadUrlType[loggedOutUrl] = type;
+      _loadUrlType[_loggedOutUrl] = type;
     } else {
       _loadUrlType[urlRequest.url.toString()] = type;
     }
@@ -118,7 +118,7 @@ class ScrapYoutube {
             if (buttons.length > 0) {
               buttons[0].click();
             }
-          }, 500);
+          }, 750);
         }
       """
     );
