@@ -36,7 +36,11 @@ class HeadlessWebViewUser {
     switch (type) {
       case LoadUrlType.userInfo:
         final info = await scrapYoutube.parseGetUserInfo(webViewController);
-        ref.read(userProvider.notifier).state = UserData(nickname: info[0], id: info[1], photo: info[2]);
+        if (info is List<dynamic>) {
+          if (info.length == 3) {
+            ref.read(userProvider.notifier).state = UserData(nickname: info[0], id: info[1], photo: info[2]);
+          }
+        }
         break;
       case LoadUrlType.subscribeList:
         final list = await scrapYoutube.parseGetSubscribeList(webViewController);
